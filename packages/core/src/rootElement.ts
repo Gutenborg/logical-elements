@@ -87,7 +87,12 @@ class RootElement extends HTMLElement {
     };
 
     const listen = (callback: (event: CustomEvent<T>) => void) => {
-      this.addEventListener(options.name, callback as EventListener);
+      this.addEventListener(options.name, (event) => {
+        // Check to make sure that the event is happening on this element
+        if (typeof callback === "function" && this === event.target) {
+          callback.apply(this, [event as CustomEvent<T>]);
+        }
+      });
     };
 
     return {
@@ -102,6 +107,8 @@ class RootElement extends HTMLElement {
   }
 
   initialize() {
+    console.log("Initializing!", this);
+
     if (this.enableShadow) {
       this.renderRoot.innerHTML = this.render();
     } else {
@@ -133,36 +140,46 @@ class RootElement extends HTMLElement {
         type: "text",
       };
 
-      if (node.nodeType === 3) {
-        console.log("Text!");
-        return sort;
-      } else if (node.nodeType === 1) {
-        console.log({ node: (node as Element).slot });
-        sort.slot = (node as Element).slot;
+      if (node.nodeType === 1) {
+        // Type is an element
+        sort.slot = (node as HTMLElement).slot;
         sort.type = "element";
-        return sort;
-      } else {
-        console.log("Invalid!");
+      } else if (node.nodeType !== 3) {
+        // Type is not a text node and cannot be added
         sort.type = "invalid";
-        return sort;
       }
+
+      return sort;
     });
 
+    // Grab all slots from a component
     const allSlots = Array.from(tempContainer.querySelectorAll("slot"));
 
+    // Place the content into the appropriate slot
     sortedNodes.forEach((node) => {
       const foundSlot = allSlots.find((slot) => slot.name === node.slot);
 
-      console.log(foundSlot);
-
       if (foundSlot && node.type === "element") {
-        foundSlot.insertAdjacentElement("beforebegin", node.node as Element);
+        foundSlot.insertAdjacentElement(
+          "beforebegin",
+          node.node as HTMLElement
+        );
       } else if (foundSlot && node.type === "text") {
         foundSlot.insertAdjacentText(
           "beforebegin",
           node.node.textContent as string
         );
+      } else if (!foundSlot && node.type === "element") {
+        // Add the element to the default slot and hide it
+        const defaultSlot = allSlots.find((slot) => slot.name === "");
+
+        (node.node as HTMLElement).hidden = true;
+        defaultSlot?.insertAdjacentElement(
+          "beforebegin",
+          node.node as HTMLElement
+        );
       } else {
+        // Remove all invalid types
         node.node.remove();
       }
     });
