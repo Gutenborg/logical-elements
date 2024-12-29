@@ -1,36 +1,50 @@
 import { defaultEventOptions } from "./utilities";
 
-export type AttributeConvertTypes =
-  | "array"
-  | "boolean"
-  | "number"
-  | "object"
-  | "string";
+export type AttributeConvertTypes = "boolean" | "number" | "string";
+
+export interface RootLifecycleEventUpdatedDetail {
+  type: "attribute" | "childNode";
+  target: string;
+  oldValue: string | null;
+  newValue: string | null;
+}
 
 export interface RootLifecycleEventMap {
   "root-element-connected": CustomEvent<null>;
   "root-element-disconnected": CustomEvent<null>;
   "root-element-initialized": CustomEvent<null>;
-  "root-element-updated": CustomEvent<null>;
+  "root-element-updated": CustomEvent<RootLifecycleEventUpdatedDetail>;
 }
 
 export interface AttributeConvertDefinition {
-  fromAttribute: (value: string) => unknown;
-  toAttribute: (value: unknown) => string;
+  fromAttribute: (value: string | null) => RootAttributeValue;
+  toAttribute: (value: unknown) => string | null;
 }
 
 export interface LinkAttributeOptions {
-  attribute?: string;
+  attribute: string;
   convert?: AttributeConvertTypes | AttributeConvertDefinition;
 }
+
+export interface RootAttributeDefinition {
+  get: () => RootAttributeValue;
+  getDirect: () => string | null;
+  set: (value: RootAttributeValue) => void;
+  setDirect: (value: string) => void;
+}
+
+export type RootAttributeValue = string | boolean | number;
 
 export interface CustomEventOptions extends CustomEventInit {
   name: keyof RootLifecycleEventMap | string;
 }
 
-class RootElement extends HTMLElement {
-  private static observedAttributes = [];
+export interface RootSlottedNode {
+  node: ChildNode;
+  slot: string;
+}
 
+export class RootElement extends HTMLElement {
   public enableShadow: boolean = false;
 
   protected isInitialized: boolean = false;
@@ -48,13 +62,35 @@ class RootElement extends HTMLElement {
       ...defaultEventOptions,
       name: "root-element-initialized",
     }),
-    updated: this.defineEvent({
+    updated: this.defineEvent<RootLifecycleEventUpdatedDetail>({
       ...defaultEventOptions,
       name: "root-element-updated",
     }),
   };
 
-  protected propertyValues: Record<string, unknown> = {};
+  private observerForAttribute = new MutationObserver((changes) => {
+    changes.forEach((change) => {
+      if (
+        change.type === "attributes" &&
+        typeof change.attributeName === "string"
+      ) {
+        const attributeValue = this.getAttribute(change.attributeName);
+
+        if (change.oldValue !== attributeValue) {
+          this.attributeChangedCallback(
+            change.attributeName,
+            change.oldValue,
+            this.getAttribute(change.attributeName)
+          );
+        }
+      }
+    });
+  });
+
+  private observerForChildNodes = new MutationObserver(
+    this.childrenUpdatedCallback
+  );
+
   protected renderRoot: ShadowRoot | RootElement;
 
   constructor() {
@@ -65,18 +101,123 @@ class RootElement extends HTMLElement {
     } else {
       this.renderRoot = this;
     }
-
-    // Register lifecycle event handlers
-    this.lifecycle.connected.listen(this.initialize);
   }
 
-  attributeChangedCallback() {}
+  protected applyTemplate(markupTemplate: string = this.template()) {
+    const parser = new DOMParser().parseFromString(
+      markupTemplate,
+      "text/html"
+    ).body;
+
+    // Mark all rendered elements
+    parser
+      .querySelectorAll("*")
+      .forEach((element) => element.setAttribute("data-rendered-element", ""));
+
+    // Sort through direct child nodes and add them to the slotted nodes list
+    Array.from(this.childNodes).forEach((node) => {
+      if (
+        node instanceof Element &&
+        node.getAttribute("data-rendered-element") !== null
+      ) {
+        return;
+      }
+
+      let slotName = "";
+
+      if (node instanceof Text) {
+        this.slottedNodes.push({ node, slot: slotName });
+      } else if (node instanceof Element) {
+        this.slottedNodes.push({ node, slot: node.slot });
+      }
+    });
+
+    // Slot child nodes
+    const allSlots = Array.from(parser.querySelectorAll("slot"));
+
+    this.slottedNodes.forEach(({ node, slot }, index) => {
+      const matchingSlot = allSlots.find((s) => s.name === slot);
+
+      if (!matchingSlot) {
+        node.remove();
+        this.slottedNodes.splice(index, 1);
+        return;
+      }
+
+      if (node instanceof Text) {
+        matchingSlot.insertAdjacentText("afterend", node.textContent ?? "");
+      } else if (node instanceof Element) {
+        matchingSlot.insertAdjacentElement("afterend", node as Element);
+      }
+    });
+
+    this.replaceChildren(...parser.childNodes);
+  }
+
+  attributeChangedCallback(
+    attribute: string,
+    oldValue: string | null,
+    newValue: string | null
+  ) {
+    this.lifecycle.updated.dispatch({
+      detail: { type: "attribute", target: attribute, oldValue, newValue },
+    });
+
+    this.applyTemplate(this.template());
+  }
+
+  childrenUpdatedCallback() {
+    console.log("Children Updated!");
+  }
 
   connectedCallback() {
     this.lifecycle.connected.dispatch();
+    this.initialize();
   }
 
-  defineEvent<T = null>(options: CustomEventOptions) {
+  convertFromAttribute(
+    value: string | null,
+    convertMethod?: AttributeConvertTypes
+  ) {
+    let convertedValue: RootAttributeValue = "";
+
+    switch (convertMethod) {
+      case "boolean":
+        convertedValue = !!value;
+        break;
+      case "number":
+        convertedValue = Number(value);
+        break;
+      case "string":
+      default:
+        convertedValue = value === null ? "" : String(value);
+        break;
+    }
+
+    return convertedValue;
+  }
+
+  convertToAttribute(
+    value: RootAttributeValue,
+    convertMethod?: AttributeConvertTypes
+  ) {
+    let convertedValue: string | null = "";
+
+    switch (convertMethod) {
+      case "boolean":
+        convertedValue = value ? "" : null;
+        break;
+      case "number":
+      case "string":
+      default:
+        convertedValue = String(value);
+        break;
+    }
+
+    return convertedValue;
+  }
+
+  protected defineEvent<T = null>(options: CustomEventOptions) {
     const dispatch = (overrideOptions: CustomEventInit<T> = {}) => {
       const event = new CustomEvent<T>(options.name, {
         ...defaultEventOptions,
@@ -106,99 +247,84 @@ class RootElement extends HTMLElement {
     this.lifecycle.disconnected.dispatch();
   }
 
-  initialize() {
-    console.log("Initializing!", this);
+  private initialize() {
+    // This is called to handle the first rendering and should not be called again
+    this.applyTemplate(this.template());
 
-    if (this.enableShadow) {
-      this.renderRoot.innerHTML = this.render();
-    } else {
-      // We need to manually assign slotted elements
-      this.slotElements(this.render());
-    }
+    // Setup observers
+    this.observerForAttribute.observe(this, { attributeOldValue: true });
+    this.observerForChildNodes.observe(this, { childList: true });
 
     this.isInitialized = true;
     this.lifecycle.initialized.dispatch();
   }
 
-  render() {
-    // Default render method
-    return ``;
-  }
+  protected linkAttribute(
+    options: LinkAttributeOptions
+  ): RootAttributeDefinition {
+    // Handles data conversion
+    const get = () => {
+      const attributeValue = this.getAttribute(options.attribute);
 
-  slotElements(renderedHTML: string) {
-    // The renderedHTML is what the component has rendered, and this.childnodes is what the is currently in the component
-    const tempContainer = document.createElement("div");
-    tempContainer.innerHTML = renderedHTML;
+      let convertedValue: RootAttributeValue = "";
 
-    // Sort childnodes into slots
-    const childNodes = Array.from(this.childNodes);
-
-    const sortedNodes = childNodes.map((node) => {
-      const sort = {
-        node, // Which node has been slotted
-        slot: "", // Sort initially into default
-        type: "text",
-      };
-
-      if (node.nodeType === 1) {
-        // Type is an element
-        sort.slot = (node as HTMLElement).slot;
-        sort.type = "element";
-      } else if (node.nodeType !== 3) {
-        // Type is not a text node and cannot be added
-        sort.type = "invalid";
-      }
-
-      return sort;
-    });
-
-    // Grab all slots from a component
-    const allSlots = Array.from(tempContainer.querySelectorAll("slot"));
-
-    // Place the content into the appropriate slot
-    sortedNodes.forEach((node) => {
-      const foundSlot = allSlots.find((slot) => slot.name === node.slot);
-
-      if (foundSlot && node.type === "element") {
-        foundSlot.insertAdjacentElement(
-          "beforebegin",
-          node.node as HTMLElement
-        );
-      } else if (foundSlot && node.type === "text") {
-        foundSlot.insertAdjacentText(
-          "beforebegin",
-          node.node.textContent as string
-        );
-      } else if (!foundSlot && node.type === "element") {
-        // Add the element to the default slot and hide it
-        const defaultSlot = allSlots.find((slot) => slot.name === "");
-
-        (node.node as HTMLElement).hidden = true;
-        defaultSlot?.insertAdjacentElement(
-          "beforebegin",
-          node.node as HTMLElement
-        );
+      if (options.convert && typeof options.convert !== "string") {
+        convertedValue = options.convert.fromAttribute(attributeValue);
       } else {
-        // Remove all invalid types
-        node.node.remove();
+        convertedValue = this.convertFromAttribute(
+          attributeValue,
+          options.convert
+        );
       }
-    });
 
-    this.replaceChildren(tempContainer.firstChild as ChildNode);
+      return convertedValue;
+    };
+
+    // Pulls the attribute value directly
+    const getDirect = () => {
+      return this.getAttribute(options.attribute);
+    };
+
+    // Handles data conversion
+    const set = (value: RootAttributeValue) => {
+      let convertedValue: string | null;
+
+      if (options.convert && typeof options.convert !== "string") {
+        convertedValue = options.convert.toAttribute(value);
+      } else {
+        convertedValue = this.convertToAttribute(value, options.convert);
+      }
+
+      if (convertedValue === null) {
+        this.removeAttribute(options.attribute);
+      } else {
+        this.setAttribute(options.attribute, convertedValue);
+      }
+    };
+
+    // Sets the attribute value directly
+    const setDirect = (value: string | null) => {
+      if (value === null) {
+        this.removeAttribute(options.attribute);
+      } else {
+        this.setAttribute(options.attribute, value);
+      }
+    };
+
+    return {
+      get,
+      getDirect,
+      set,
+      setDirect,
+    };
   }
 
-  /* To-Do: Set up reflections using custom events */
-  /*
-  Class defines property and creates an event listener for a custom event that will update the property value
-  Class assigns a default value to the property
-  Property setter sets the property value and sends out the custom event to update the attribute
-  Component is not initialized, so it adds the update to the update queue
-  Component initializes and reads the value in the attribute
-  The attributeChangedCallback sends out the custom event to update the property
-  Component is not fully initialized so it adds the update to the update queue
-  Component processes the update queue and sends out an event to signal that it is done processing
-  If the property or attribute change it sends out the event and the component handles the update
-*/
+  private slottedNodes: RootSlottedNode[] = [];
+
+  template() {
+    // Default render method
+    return `<slot></slot>`;
+  }
 }
 
 export default RootElement;

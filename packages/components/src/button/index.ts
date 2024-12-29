@@ -1,8 +1,18 @@
-import RootElement from "../../../core/src/rootElement";
+import { RootElement } from "../../../core/src";
 
 class RootButton extends RootElement {
-  render() {
-    return `<button><slot></slot><slot name="testing"></slot></button>`;
+  testing = this.linkAttribute({ attribute: "testing" });
+
+  handleClick = (event: MouseEvent) => {
+    console.log("Clicked!");
+  };
+
+  template() {
+    return `<button>
+    ${this.testing.get()}
+    <root-slot></root-slot>
+    <root-slot name="testing"></root-slot>
+    </button>`;
   }
 }
 
