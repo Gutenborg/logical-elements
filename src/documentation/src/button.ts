@@ -1,4 +1,4 @@
-import { RootElement } from "../../../core/src";
+import { RootElement } from "../../lib/src";
 
 class RootButton extends RootElement {
   testing = this.linkAttribute({ attribute: "testing" });
