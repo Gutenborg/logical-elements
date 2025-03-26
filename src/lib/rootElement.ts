@@ -1,19 +1,22 @@
-import { defaultEventOptions } from "./utilities";
-
 export type AttributeConvertTypes = "boolean" | "number" | "string";
 
-export interface RootLifecycleEventUpdatedDetail {
-  type: "attribute" | "childNode";
+export interface RootLifecycleEventAttributeUpdatedDetail {
   target: string;
   oldValue: string | null;
   newValue: string | null;
 }
 
+export interface RootLifecycleEventChildrenUpdatedDetail
+  extends Pick<MutationRecord, "addedNodes" | "removedNodes" | "target"> {}
+
 export interface RootLifecycleEventMap {
+  "root-element-attribute-updated": CustomEvent<RootLifecycleEventAttributeUpdatedDetail>;
+  "root-element-children-updated": CustomEvent<RootLifecycleEventChildrenUpdatedDetail>;
   "root-element-connected": CustomEvent<null>;
+  "root-element-did-render": CustomEvent<null>;
   "root-element-disconnected": CustomEvent<null>;
   "root-element-initialized": CustomEvent<null>;
-  "root-element-updated": CustomEvent<RootLifecycleEventUpdatedDetail>;
+  "root-element-will-render": CustomEvent<null>;
 }
 
 export interface AttributeConvertDefinition {
@@ -44,15 +47,34 @@ export interface RootSlottedNode {
   slot: string;
 }
 
+const defaultEventOptions: CustomEventInit = {
+  bubbles: true,
+  cancelable: true,
+  composed: true,
+};
+
 export class RootElement extends HTMLElement {
   public enableShadow: boolean = false;
 
   protected isInitialized: boolean = false;
 
   protected lifecycle = {
+    attributeUpdated:
+      this.defineEvent<RootLifecycleEventAttributeUpdatedDetail>({
+        ...defaultEventOptions,
+        name: "root-element-attribute-updated",
+      }),
+    childrenUpdated: this.defineEvent<RootLifecycleEventChildrenUpdatedDetail>({
+      ...defaultEventOptions,
+      name: "root-element-children-updated",
+    }),
     connected: this.defineEvent({
       ...defaultEventOptions,
       name: "root-element-connected",
+    }),
+    didRender: this.defineEvent({
+      ...defaultEventOptions,
+      name: "root-element-did-render",
     }),
     disconnected: this.defineEvent({
       ...defaultEventOptions,
@@ -62,9 +84,9 @@ export class RootElement extends HTMLElement {
       ...defaultEventOptions,
       name: "root-element-initialized",
     }),
-    updated: this.defineEvent<RootLifecycleEventUpdatedDetail>({
+    willRender: this.defineEvent({
       ...defaultEventOptions,
-      name: "root-element-updated",
+      name: "root-element-will-render",
     }),
   };
 
@@ -80,7 +102,7 @@ export class RootElement extends HTMLElement {
           this.attributeChangedCallback(
             change.attributeName,
             change.oldValue,
-            this.getAttribute(change.attributeName)
+            attributeValue
           );
         }
       }
@@ -159,15 +181,19 @@ export class RootElement extends HTMLElement {
     oldValue: string | null,
     newValue: string | null
   ) {
-    this.lifecycle.updated.dispatch({
-      detail: { type: "attribute", target: attribute, oldValue, newValue },
+    this.lifecycle.attributeUpdated.dispatch({
+      detail: { target: attribute, oldValue, newValue },
     });
 
     this.applyTemplate(this.template());
   }
 
-  childrenUpdatedCallback() {
-    console.log("Children Updated!");
+  childrenUpdatedCallback(changes: MutationRecord[]) {
+    changes.forEach(({ addedNodes, removedNodes, target }) => {
+      this.lifecycle.childrenUpdated.dispatch({
+        detail: { addedNodes, removedNodes, target },
+      });
+    });
   }
 
   connectedCallback() {
