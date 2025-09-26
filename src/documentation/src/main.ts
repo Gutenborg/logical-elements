@@ -1,15 +1,17 @@
 import "./style.css";
+import "../../lib";
+import { ContextStore } from "../../lib/core/context";
+import { LeContext } from "../../lib";
 
-import "../../components/src/index";
+const contextElement = document.querySelector<LeContext>(
+  "le-context#test-context"
+);
 
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div>
-    <h1>Root UI</h1>
-
-    <div class="card">
-      <root-button testing="This is a test">
-        Testing <p slot="testing">Another Test!</p> <p slot="not-a-real-slot">Yet Another Test!</p>
-      </root-button>
-    </div>
-  </div>
-`;
+if (contextElement !== null) {
+  setTimeout(() => {
+    contextElement.context = new ContextStore(
+      { testing: true },
+      contextElement
+    );
+  }, 1000);
+}

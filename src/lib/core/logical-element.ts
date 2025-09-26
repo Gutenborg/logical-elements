@@ -1,26 +1,27 @@
-import UpdateScheduler from './update-scheduler';
-import type { HTMLAttributeValue } from './shared-types';
+import UpdateScheduler from "./update-scheduler";
+import type { HTMLAttributeValue } from "./shared-types";
+import LeContext from "../components/le-context";
 
 interface LogicalElement extends HTMLElement {
   addEventListener<K extends keyof HTMLElementEventMap>(
     type: K,
     listener: (this: LogicalElement, event: HTMLMediaElementEventMap[K]) => any,
-    options: boolean | AddEventListenerOptions,
+    options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener(
     type: string,
     listener: (this: LogicalElement, event: Event) => any,
-    options: boolean | AddEventListenerOptions,
+    options?: boolean | AddEventListenerOptions
   ): void;
   addEventListener<K extends keyof LogicalElementEventMap>(
     type: K,
     listener: (this: LogicalElement, event: LogicalElementEventMap[K]) => any,
-    options: boolean | AddEventListenerOptions,
+    options?: boolean | AddEventListenerOptions
   ): void;
   onAttributeChanged?(
     attribute: string,
     oldValue: HTMLAttributeValue,
-    newValue: HTMLAttributeValue,
+    newValue: HTMLAttributeValue
   ): void;
   onChildrenModified(records: MutationRecord[]): void;
   onConnected?(): void;
@@ -41,12 +42,12 @@ interface AttributeChangedEventDetail {
 interface ChildrenModifiedEventDetail extends MutationRecord {}
 
 interface LogicalElementEventMap {
-  'le-attribute-changed': CustomEvent<AttributeChangedEventDetail>;
-  'le-children-modified': CustomEvent<ChildrenModifiedEventDetail>;
-  'le-connected': CustomEvent<null>;
-  'le-disconnected': CustomEvent<null>;
-  'le-parsed': CustomEvent<null>;
-  'le-updated': CustomEvent<null>;
+  "le-attribute-changed": CustomEvent<AttributeChangedEventDetail>;
+  "le-children-modified": CustomEvent<ChildrenModifiedEventDetail>;
+  "le-connected": CustomEvent<null>;
+  "le-disconnected": CustomEvent<null>;
+  "le-parsed": CustomEvent<null>;
+  "le-updated": CustomEvent<null>;
 }
 
 declare global {
@@ -60,6 +61,26 @@ class LogicalElement extends HTMLElement {
   // private _attributeObserver: MutationObserver | null = null;
 
   public isParsed: boolean = false;
+  public get contextProviders() {
+    const providers: Record<string, LeContext> = {};
+
+    // Find all parent context elements
+    let provider = this.closest<LeContext>("le-context");
+
+    while (provider !== null) {
+      const providerNamespace = provider.getAttribute("namespace");
+
+      if (typeof providerNamespace === "string") {
+        providers[providerNamespace] = provider;
+      }
+
+      if (provider.parentElement !== null) {
+        provider = provider.parentElement.closest<LeContext>("le-context");
+      }
+    }
+
+    return providers;
+  }
 
   // MARK: Constructor
   constructor() {
@@ -67,7 +88,7 @@ class LogicalElement extends HTMLElement {
 
     //Set up attribute mutation observer
     this._childrenObserver = new MutationObserver(
-      this.childrenModifiedCallback.bind(this),
+      this.childrenModifiedCallback.bind(this)
     );
 
     // Set up attribute mutation observer
@@ -83,14 +104,14 @@ class LogicalElement extends HTMLElement {
     }); */
 
     this.addEventListener(
-      'le-parsed',
+      "le-parsed",
       () => {
         // Once the element is parsed, we will observe for child mutation changes
         this._childrenObserver?.observe(this, {
           childList: true,
         });
       },
-      { once: true },
+      { once: true }
     );
   }
 
@@ -110,7 +131,7 @@ class LogicalElement extends HTMLElement {
   attributeChangedCallback(
     attribute: string,
     oldValue: HTMLAttributeValue,
-    newValue: HTMLAttributeValue,
+    newValue: HTMLAttributeValue
   ) {
     if (!this.isParsed) {
       // These are initial attribute assignments, not changes
@@ -120,17 +141,17 @@ class LogicalElement extends HTMLElement {
     // Schedule the update lifecycle
     this._updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
 
-    if (typeof this.onAttributeChanged === 'function') {
+    if (typeof this.onAttributeChanged === "function") {
       // Perform component author logic
       this.onAttributeChanged(attribute, oldValue, newValue);
     }
 
     // Perform component consumer logic
     this.dispatchEvent(
-      new CustomEvent('le-attribute-changed', {
+      new CustomEvent("le-attribute-changed", {
         ...this.attributeChangedEventOptions,
         detail: { attribute, newValue, oldValue },
-      }),
+      })
     );
   }
 
@@ -160,33 +181,33 @@ class LogicalElement extends HTMLElement {
 
   connectedCallback() {
     // Run the user's connected logic
-    if (typeof this.onConnected === 'function') {
+    if (typeof this.onConnected === "function") {
       // Perform component author logic
       this.onConnected();
     }
 
     // Perform component consumer logic
     this.dispatchEvent(
-      new CustomEvent('le-connected', {
+      new CustomEvent("le-connected", {
         ...this.connectedEventOptions,
         detail: null,
-      }),
+      })
     );
 
     // Check DOM state
-    if (this.ownerDocument.readyState !== 'complete') {
+    if (this.ownerDocument.readyState !== "complete") {
       // DOM is not loaded, so we check for it to load or for the children of the parent to change
       const handleReady = () => {
         // Cleanup
         observer.disconnect();
-        this.removeEventListener('DOMContentLoaded', handleReady);
+        this.removeEventListener("DOMContentLoaded", handleReady);
 
         // Check for parsed
         this.parsedCallback();
       };
 
       // Add event listener for when DOM is finished loading
-      this.ownerDocument.addEventListener('DOMContentLoaded', handleReady);
+      this.ownerDocument.addEventListener("DOMContentLoaded", handleReady);
 
       // Add a mutation observer to the parent to watch for changes
       const observer = new MutationObserver(handleReady);
@@ -215,17 +236,17 @@ class LogicalElement extends HTMLElement {
   };
 
   disconnectedCallback() {
-    if (typeof this.onDisconnected === 'function') {
+    if (typeof this.onDisconnected === "function") {
       // Perform component author logic
       this.onDisconnected();
     }
 
     // Perform component consumer logic
     this.dispatchEvent(
-      new CustomEvent('le-disconnected', {
+      new CustomEvent("le-disconnected", {
         ...this.attributeChangedEventOptions,
         detail: null,
-      }),
+      })
     );
   }
 
@@ -246,17 +267,17 @@ class LogicalElement extends HTMLElement {
     // Schedule update callback
     this._updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
 
-    if (typeof this.onChildrenModified == 'function') {
+    if (typeof this.onChildrenModified == "function") {
       // Perform component author logic
       this.onChildrenModified(records);
     }
 
     // Perform component consumer logic
     this.dispatchEvent(
-      new CustomEvent('le-children-modified', {
+      new CustomEvent("le-children-modified", {
         ...this.childrenModifiedEventOptions,
         detail: records,
-      }),
+      })
     );
   }
 
@@ -290,17 +311,17 @@ class LogicalElement extends HTMLElement {
 
     // If we didn't find a sibling try again on the next step
     if (this.isParsed) {
-      if (typeof this.onParsed === 'function') {
+      if (typeof this.onParsed === "function") {
         // Perform component author logic
         this.onParsed();
       }
 
       // Perform component consumer logic
       this.dispatchEvent(
-        new CustomEvent('le-parsed', {
+        new CustomEvent("le-parsed", {
           ...this.parsedEventOptions,
           detail: null,
-        }),
+        })
       );
     } else {
       // Potential for a loop, might want to add a protection to this
@@ -310,16 +331,16 @@ class LogicalElement extends HTMLElement {
 
   // MARK: Updated
   updatedCallback() {
-    if (typeof this.onUpdated === 'function') {
+    if (typeof this.onUpdated === "function") {
       this.onUpdated();
     }
 
     // Perform component consumer logic
     this.dispatchEvent(
-      new CustomEvent('le-updated', {
+      new CustomEvent("le-updated", {
         ...this.parsedEventOptions,
         detail: null,
-      }),
+      })
     );
   }
 }

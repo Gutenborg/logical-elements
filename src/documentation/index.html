@@ -1,13 +1,53 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + TS</title>
+
+    <style>
+      :not(:defined) {
+        display: none;
+      }
+    </style>
   </head>
+
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <le-context namespace="testContext">
+        <script data-context>
+          function testContext() {
+            return { testing: true };
+          }
+        </script>
+
+        <le-if condition="$testContext.testing">
+          <p>Render 1</p>
+        </le-if>
+
+        <le-if condition="false">
+          <p>Render 2</p>
+        </le-if>
+
+        <le-if condition="false">
+          <p>Render 3</p>
+        </le-if>
+
+        <le-else>
+          <p>Render 3</p>
+        </le-else>
+      </le-context>
+
+      <le-context id="test-context">
+        <le-if condition="$testContext.testing">
+          <test-element prop-test="Testing">
+            <button data-assign="prop-test"></button>
+          </test-element>
+        </le-if>
+      </le-context>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
