@@ -58,9 +58,19 @@ class LogicalElement extends HTMLElement {
   // MARK: Properties
   private _childrenObserver: MutationObserver | null = null;
   private _updateScheduler = new UpdateScheduler();
-  // private _attributeObserver: MutationObserver | null = null;
+  // TO-DO: Set up the state property and add handlers for creating and reading state
+  // TO-DO: Set up the reactivity of the state so that it triggers a new lifecycle event
+  // TO-DO: Set up a 'le-state-updated' lifecycle event that also triggers the 'le-updated' lifecycle event
+  // TO-DO: Set up a tool that locates all children with reactive attributes and applies any state updates to them
+  // TO-DO: Set up a tool that locates all children with event binding attributes and creates event listeners for them
+  // TO-DO: Set up something that makes sure to clean up after the event binding attributes and the created event listeners
 
   public isParsed: boolean = false;
+
+  /** TO-DO: This needs to return a list of all parent Logical Elements, not just the le-context element
+   * The goal here is to build the state/context feature directly
+   * into the base class so that all children can access the state of any parent logical element
+   */
   public get contextProviders() {
     const providers: Record<string, LeContext> = {};
 
@@ -82,43 +92,10 @@ class LogicalElement extends HTMLElement {
     return providers;
   }
 
-  // MARK: Constructor
-  constructor() {
-    super();
-
-    //Set up attribute mutation observer
-    this._childrenObserver = new MutationObserver(
-      this.childrenModifiedCallback.bind(this)
-    );
-
-    // Set up attribute mutation observer
-    // Not sure if this is needed
-    /* this._attributeObserver = new MutationObserver(
-      this.attributeChangedCallback,
-    );
-
-    this._attributeObserver?.observe(this, {
-      attributeFilter: undefined,
-      attributeOldValue: true,
-      attributes: true,
-    }); */
-
-    this.addEventListener(
-      "le-parsed",
-      () => {
-        // Once the element is parsed, we will observe for child mutation changes
-        this._childrenObserver?.observe(this, {
-          childList: true,
-        });
-      },
-      { once: true }
-    );
-  }
-
   // MARK: Attribute Changed
-  /** The default event options for the 'children-modified' custom event. Can be overwritten by the component author
-   * @prop bubbles - Defaults to true
-   * @prop cancelable - Defaults to true
+  /** The default event options for the 'le-attribute-changed' custom event. Can be overwritten by the component author
+   * @prop bubbles - Defaults to false
+   * @prop cancelable - Defaults to false
    * @prop composed - Defaults to false
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Event/Event#options
    */
@@ -155,19 +132,8 @@ class LogicalElement extends HTMLElement {
     );
   }
 
-  // Note sure if this is needed
-  /* attributeMutatedCallback(records: MutationRecord[]) {
-    for (const mutation of records) {
-      const attribute = mutation.attributeName!;
-      const newValue = this.getAttribute(attribute);
-      const oldValue = mutation.oldValue;
-
-      this.attributechangedCallback(attribute, oldValue, newValue);
-    }
-  } */
-
   // MARK: Connected
-  /** The default event options for the 'connected' custom event. Can be overwritten by the component author
+  /** The default event options for the 'le-connected' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to true
    * @prop cancelable - Defaults to true
    * @prop composed - Defaults to false
@@ -194,20 +160,17 @@ class LogicalElement extends HTMLElement {
       })
     );
 
-    // Check DOM state
+    // Set up the element to determine when it is parsed by checking the DOM state
     if (this.ownerDocument.readyState !== "complete") {
-      // DOM is not loaded, so we check for it to load or for the children of the parent to change
+      // DOM is not completely loaded yet
       const handleReady = () => {
-        // Cleanup
+        // Disconnect the observer and remove the event listener
         observer.disconnect();
         this.removeEventListener("DOMContentLoaded", handleReady);
 
-        // Check for parsed
+        // We cn now check to see if the element is parsed
         this.parsedCallback();
       };
-
-      // Add event listener for when DOM is finished loading
-      this.ownerDocument.addEventListener("DOMContentLoaded", handleReady);
 
       // Add a mutation observer to the parent to watch for changes
       const observer = new MutationObserver(handleReady);
@@ -216,6 +179,9 @@ class LogicalElement extends HTMLElement {
         childList: true,
         subtree: false,
       });
+
+      // Add event listener for when DOM is finished loading
+      this.ownerDocument.addEventListener("DOMContentLoaded", handleReady);
     } else {
       // DOM is loaded, go ahead and check for siblings
       this.parsedCallback();
@@ -223,7 +189,7 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Disconnected
-  /** The default event options for the 'disconnected' custom event. Can be overwritten by the component author
+  /** The default event options for the 'le-disconnected' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to true
    * @prop cancelable - Defaults to true
    * @prop composed - Defaults to false
@@ -251,7 +217,7 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Children Modified
-  /** The default event options for the 'children-modified' custom event. Can be overwritten by the component author
+  /** The default event options for the 'le-children-modified' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to false
    * @prop cancelable - Defaults to false
    * @prop composed - Defaults to false
@@ -282,7 +248,7 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Parsed
-  /** The default event options for the 'parsed' custom event. Can be overwritten by the component author
+  /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to false
    * @prop cancelable - Defaults to false
    * @prop composed - Defaults to false
@@ -295,13 +261,13 @@ class LogicalElement extends HTMLElement {
   };
 
   parsedCallback() {
-    // Schedule update callback
+    // Schedule the update callback
     this._updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
 
-    // Check if parsed
+    // Check if element is parsed
     let el: HTMLElement | ChildNode | ParentNode | null = this;
 
-    // Work our way up the parent tree until we find a sibling node
+    // Work our way up the parent tree looking for a sibling node
     do {
       if (el.nextSibling || el.parentNode?.lastChild === el) {
         this.isParsed = true;
@@ -323,6 +289,16 @@ class LogicalElement extends HTMLElement {
           detail: null,
         })
       );
+
+      // Since it is parsed, need to set up the children mutation observer
+      this._childrenObserver = new MutationObserver(
+        this.childrenModifiedCallback.bind(this)
+      );
+
+      // Activate the child mutation listener
+      this._childrenObserver?.observe(this, {
+        childList: true,
+      });
     } else {
       // Potential for a loop, might want to add a protection to this
       requestAnimationFrame(this.parsedCallback);
@@ -330,6 +306,18 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Updated
+  /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
+   * @prop bubbles - Defaults to false
+   * @prop cancelable - Defaults to false
+   * @prop composed - Defaults to false
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Event/Event#options
+   */
+  public updatedEventOptions: EventInit = {
+    bubbles: false,
+    cancelable: false,
+    composed: false,
+  };
+
   updatedCallback() {
     if (typeof this.onUpdated === "function") {
       this.onUpdated();
@@ -338,7 +326,7 @@ class LogicalElement extends HTMLElement {
     // Perform component consumer logic
     this.dispatchEvent(
       new CustomEvent("le-updated", {
-        ...this.parsedEventOptions,
+        ...this.updatedEventOptions,
         detail: null,
       })
     );
