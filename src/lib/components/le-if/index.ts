@@ -41,12 +41,10 @@ class LeIf extends LogicalElement {
   }
 
   hideContent() {
-    console.log("Hiding content!", this);
     this.hidden = true;
   }
 
   showContent() {
-    console.log("Showing content!", this);
     this.hidden = false;
   }
 }

@@ -46,6 +46,28 @@
           </test-element>
         </le-if>
       </le-context>
+
+      <le-context namespace="testLeEach">
+        <script data-context>
+          function testLeEach() {
+            return { fruits: ["Apple", "Banana", "Peach", "Raspberry"] };
+          }
+        </script>
+        
+        <h4>Some of my favorite fruits</h4>
+        <le-each for="$testLeEach.fruits" as="$fruit">
+          <!-- This template will be created for every item in the context -->
+          <template data-for="favorite-fruits">
+            <li data-assign="$fruit"></li>
+          </template>
+
+          <ul id="favorite-fruits"></ul>
+        </le-each>
+
+        <le-else>
+          <p>No fruits to show!</p>
+        </le-else>
+      </le-context>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

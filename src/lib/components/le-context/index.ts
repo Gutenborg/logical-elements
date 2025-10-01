@@ -90,12 +90,12 @@ class LeContext extends LogicalElement {
       this.context = new ContextStore(contextValue, this);
     }
 
+
     // Set up the event listener for context updates
     this.addEventListener("le-context-updated", this.onContextUpdated);
   }
 
   onContextUpdated(event: CustomEvent<ContextUpdatedEventDetail>) {
-    console.log("Context updated!", event);
   }
 }
 
