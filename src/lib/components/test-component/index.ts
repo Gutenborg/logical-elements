@@ -19,26 +19,27 @@ class TestElement extends LogicalElement {
   onConnected() {
     // Initialize component when it is connected to the DOM, but attributes and children might not be ready
     // Fires only once
-  }
+    this.state.store = { testProperty: true };
 
+  }
+  
   onDisconnected() {
     // Cleanup component
   }
-
+  
   onParsed() {
     // Initialize component with attributes and children ready
     // Fires only once
   }
 
-  onUpdated() {
-    // Define reactivity to a debounced group of attribute changed, children modified, and parsed events
-    const assignments = this.querySelectorAll('button');
+  onStateUpdated(property: string, previousValue: any, newValue: any): void {
+    // Only triggers once the element has been parsed
+    console.log(property, previousValue, newValue);
+  }
 
-    assignments.forEach(element => {
-      element.textContent = this.getAttribute(
-        element.getAttribute('data-assign') ?? '',
-      );
-    });
+  onUpdated() {
+    // Define reactivity to a debounced group of attribute changed, children modified, state updated, and parsed events
+    console.log("Updated!");
   }
 }
 

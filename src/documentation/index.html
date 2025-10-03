@@ -1,63 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
 
-    <style>
-      :not(:defined) {
-        display: none;
-      }
-    </style>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
 
-  <body>
-    <div id="app">
-      <le-context namespace="testContext">
-        <script data-context>
-          function testContext() {
-            return { testing: true };
-          }
-        </script>
+  <style>
+    :not(:defined) {
+      display: none;
+    }
+  </style>
+</head>
 
-        <le-if condition="$testContext.testing">
-          <p>Render 1</p>
-        </le-if>
+<body>
+  <div id="app">
+    <le-context name="testContext">
+      <script data-context>
+        function testContext() {
+          this.state.store = { buttonLabel: "Testing Again", isDisabled: true };
+        }
+      </script>
 
-        <le-if condition="false">
-          <p>Render 2</p>
-        </le-if>
+      <test-element>
+        <button data-set:disabled="{testContext.isDisabled}" data-assign:textContent="{testContext.buttonLabel}">
+          Testing
+        </button>
+      </test-element>
 
-        <le-if condition="false">
-          <p>Render 3</p>
-        </le-if>
+      <le-if condition="{testContext.testing}">
+        <p>Render 1</p>
+      </le-if>
 
-        <le-else>
-          <p>Render 3</p>
-        </le-else>
-      </le-context>
+      <le-if condition="false">
+        <p>Render 2</p>
+      </le-if>
 
-      <le-context id="test-context">
-        <le-if condition="$testContext.testing">
+      <le-if condition="false">
+        <p>Render 3</p>
+      </le-if>
+
+      <le-else>
+        <p>Render 3</p>
+      </le-else>
+    </le-context>
+
+    <le-context name="test-context">
+      <!-- <le-if condition="$testContext.testing">
           <test-element prop-test="Testing">
             <button data-assign="prop-test"></button>
           </test-element>
-        </le-if>
-      </le-context>
+        </le-if> -->
+    </le-context>
 
-      <le-context namespace="testLeEach">
-        <script data-context>
-          function testLeEach() {
-            return { fruits: ["Apple", "Banana", "Peach", "Raspberry"] };
-          }
-        </script>
-        
-        <h4>Some of my favorite fruits</h4>
-        <le-each for="$testLeEach.fruits" as="$fruit">
-          <!-- This template will be created for every item in the context -->
-          <template data-for="favorite-fruits">
+    <le-context name="testLeEach">
+      <script data-context>
+        function testLeEach() {
+          return { fruits: ["Apple", "Banana", "Peach", "Raspberry"] };
+        }
+      </script>
+
+      <h4>Some of my favorite fruits</h4>
+      <!-- <le-each for="$testLeEach.fruits" as="$fruit"> -->
+      <!-- This template will be created for every item in the context -->
+      <!-- <template data-for="favorite-fruits">
             <li data-assign="$fruit"></li>
           </template>
 
@@ -66,10 +73,11 @@
 
         <le-else>
           <p>No fruits to show!</p>
-        </le-else>
-      </le-context>
-    </div>
+        </le-else> -->
+    </le-context>
+  </div>
 
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

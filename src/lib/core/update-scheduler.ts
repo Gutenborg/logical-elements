@@ -11,6 +11,8 @@ class UpdateScheduler {
       this.timeoutId = null;
     });
   }
+
+  // TO-DO Write a debounce function
 }
 
 export default UpdateScheduler;
