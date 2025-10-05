@@ -7,7 +7,7 @@ class LeContext extends LogicalElement {
     const contextScript = this.querySelector<HTMLScriptElement>(
       "script[data-context]"
     );
-    
+
     const name = this.getAttribute("name");
     
     if (contextScript !== null && name === null) {
@@ -21,6 +21,10 @@ class LeContext extends LogicalElement {
       // Need to run the context script and get the value
       window[name as keyof Window].call(this);
     }
+  }
+
+  onUpdated() {
+    console.log("Updated!");
   }
 }
 

@@ -1,4 +1,13 @@
 export class ReactiveState {
+  public static isStateValue (path: string | null) {
+    if (path?.startsWith("{") && path?.endsWith("}")) {
+      // Path is a state value lookup
+      return true;
+    }
+
+      return false;
+  }
+
   private _store: StateStore = this._createProxy({});
   private _subscribers: Record<number, ReactiveCallback> = {};
 
@@ -69,6 +78,7 @@ export class ReactiveState {
 
     return new Proxy(shallowClone, this._createProxyHandler());
   }
+
 
   public lookupValue(path: string) {
     const propertyMap = path.split(".");

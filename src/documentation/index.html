@@ -16,65 +16,28 @@
 
 <body>
   <div id="app">
-    <le-context name="testContext">
-      <script data-context>
-        function testContext() {
-          this.state.store = { buttonLabel: "Testing Again", isDisabled: true };
-        }
-      </script>
+      <le-context name="testContext">
+        <script data-context>
+          function testContext() {
+            let count = 0;
 
-      <test-element>
-        <button data-set:disabled="{testContext.isDisabled}" data-assign:textContent="{testContext.buttonLabel}">
+            const handleClick = (event) => {
+              count++;
+              console.log("Increasing count!", count);
+            }
+            
+            this.state.store = {
+              buttonLabel: count < 5 ? `Count is low: ${count}` : `Count is high: ${count}`,
+              handleClick,
+              isDisabled: count > 10
+            };
+          }
+        </script>
+
+        <button attr:disabled="{testContext.isDisabled}" set:text="{testContext.buttonLabel}" on:click="{testContext.handleClick}">
           Testing
         </button>
-      </test-element>
-
-      <le-if condition="{testContext.testing}">
-        <p>Render 1</p>
-      </le-if>
-
-      <le-if condition="false">
-        <p>Render 2</p>
-      </le-if>
-
-      <le-if condition="false">
-        <p>Render 3</p>
-      </le-if>
-
-      <le-else>
-        <p>Render 3</p>
-      </le-else>
-    </le-context>
-
-    <le-context name="test-context">
-      <!-- <le-if condition="$testContext.testing">
-          <test-element prop-test="Testing">
-            <button data-assign="prop-test"></button>
-          </test-element>
-        </le-if> -->
-    </le-context>
-
-    <le-context name="testLeEach">
-      <script data-context>
-        function testLeEach() {
-          return { fruits: ["Apple", "Banana", "Peach", "Raspberry"] };
-        }
-      </script>
-
-      <h4>Some of my favorite fruits</h4>
-      <!-- <le-each for="$testLeEach.fruits" as="$fruit"> -->
-      <!-- This template will be created for every item in the context -->
-      <!-- <template data-for="favorite-fruits">
-            <li data-assign="$fruit"></li>
-          </template>
-
-          <ul id="favorite-fruits"></ul>
-        </le-each>
-
-        <le-else>
-          <p>No fruits to show!</p>
-        </le-else> -->
-    </le-context>
+      </le-context>
   </div>
 
   <script type="module" src="/src/main.ts"></script>
