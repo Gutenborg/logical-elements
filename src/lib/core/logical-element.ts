@@ -523,8 +523,6 @@ class LogicalElement extends HTMLElement {
 
     // Compare assigned handlers to current handlers and remove any abandoned handlers
     for(const handler of elementHandlers) {
-      console.log("Removing abandoned handler!", handler);
-      
       if (!assignedHandlers.some((h) => h.callback === handler.callback && h.eventType === handler.eventType)) {
         // Handle has been abandoned and should be removed
         element.removeEventListener(handler.eventType, handler.callback);

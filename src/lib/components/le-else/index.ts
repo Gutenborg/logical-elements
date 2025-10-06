@@ -18,7 +18,7 @@ class LeElse extends LogicalElement {
   }
 
   onParsed() {
-    // Determine sibling type
+    // Determine sibling type/*  */
     for (const type of this.validSiblings) {
       const siblings = this.parentElement?.querySelectorAll(type);
 

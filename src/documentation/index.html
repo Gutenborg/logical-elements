@@ -18,18 +18,16 @@
   <div id="app">
       <le-context name="testContext">
         <script data-context>
-          function testContext() {
-            let count = 0;
-
+          function testContext(state) {
             const handleClick = (event) => {
-              count++;
-              console.log("Increasing count!", count);
+              state.store.count++
             }
             
-            this.state.store = {
-              buttonLabel: count < 5 ? `Count is low: ${count}` : `Count is high: ${count}`,
+            return {
+              count: 0,
+              buttonLabel: state.derive((store) => store.count < 5 ? `Count is low: ${store.count}` : `Count is high: ${store.count}`),
               handleClick,
-              isDisabled: count > 10
+              isDisabled: state.derive((store) => store.count > 10)
             };
           }
         </script>

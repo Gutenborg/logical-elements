@@ -2,7 +2,7 @@ import LogicalElement from "../../core/logical-element";
 import { getContextNamespace, lookupProperty } from "../../core/context";
 
 class LeEach extends LogicalElement {
-  get template() {
+  /* get template() {
     return this.querySelector<HTMLTemplateElement>("template[data-for]");
   }
 
@@ -89,7 +89,7 @@ class LeEach extends LogicalElement {
     });
 
      return clone;
-  }
+  } */
 }
 
 export default LeEach;

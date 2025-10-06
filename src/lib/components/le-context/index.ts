@@ -19,7 +19,7 @@ class LeContext extends LogicalElement {
       typeof window[name as keyof Window] === "function"
     ) {
       // Need to run the context script and get the value
-      window[name as keyof Window].call(this);
+      this.state.store = window[name as keyof Window].call(this, this.state);
     }
   }
 

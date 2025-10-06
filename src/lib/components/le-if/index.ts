@@ -2,7 +2,7 @@ import LogicalElement from "../../core/logical-element";
 import { getContextNamespace, lookupProperty } from "../../core/context";
 
 class LeIf extends LogicalElement {
-  get condition() {
+  /* get condition() {
     const attributeValue = this.getAttribute("condition");
 
     if (attributeValue === "true") {
@@ -46,7 +46,7 @@ class LeIf extends LogicalElement {
 
   showContent() {
     this.hidden = false;
-  }
+  } */
 }
 
 export default LeIf;
