@@ -1,39 +1,15 @@
 import LogicalElement from "../../core/logical-element";
-import { getContextNamespace, lookupProperty } from "../../core/context";
+import { ReactiveState } from "../../core/reactive-state";
 
 class LeIf extends LogicalElement {
-  /* get condition() {
-    const attributeValue = this.getAttribute("condition");
+  static observedAttributes = ["condition"];
 
-    if (attributeValue === "true") {
-      return true;
-    }
-
-    if (attributeValue === "false" || attributeValue === null) {
-      return false;
-    }
-
-    // Attribute might be a context lookup
-    const contextNamespace = getContextNamespace(attributeValue);
-
-    if (
-      contextNamespace !== null &&
-      this.contextProviders[contextNamespace]?.context !== undefined &&
-      this.contextProviders[contextNamespace]?.context !== null
-    ) {
-      const value = lookupProperty(
-        attributeValue,
-        this.contextProviders[contextNamespace].context.store
-      );
-
-      return value;
-    }
-
-    return false;
+  get condition() {
+    return this.getAttribute("condition");
   }
 
   onUpdated() {
-    if (this.condition) {
+    if (this.isConditionTrue()) {
       this.showContent();
     } else {
       this.hideContent();
@@ -46,7 +22,21 @@ class LeIf extends LogicalElement {
 
   showContent() {
     this.hidden = false;
-  } */
+  }
+
+  isConditionTrue() {
+    const condition = this.condition;
+
+    if (condition === "true") {
+      return true;
+    }
+
+    if (condition === "false" || condition === null || !ReactiveState.isStateValue(condition)) {
+      return false;
+    }
+
+    return !!this.getStateValue(condition);
+  }
 }
 
 export default LeIf;

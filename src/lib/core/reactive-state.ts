@@ -1,11 +1,27 @@
+export type StateStore = Record<string, any>;
+
+export type ReactiveCallback = (property: string, newValue: any, previousValue: any) => void;
+
 export class ReactiveState {
-  public static isStateValue (path: string | null) {
-    if (path?.startsWith("{") && path?.endsWith("}")) {
+  public static isStateValue (fullPath: string | null) {
+    if (fullPath?.startsWith("{") && fullPath?.endsWith("}")) {
       // Path is a state value lookup
       return true;
     }
 
       return false;
+  }
+
+  public static parsePath (fullPath: string | null) {
+    if (typeof fullPath !== "string") {
+      return { name: "", path: "" };
+    }
+
+    const splitPath = fullPath.slice(1, fullPath.length - 1).split(".");
+    const name = splitPath.shift() ?? "";
+    const path = splitPath.join();
+
+    return { name, path };
   }
 
   private _store: StateStore = this._createProxy({});
@@ -39,6 +55,7 @@ export class ReactiveState {
       get(target, property: string) {
         let value = target[property];
 
+        // TO-DO: Figure out a better way to determine when to call derived values
         if (typeof value === "function" && value.name === "wrappedCallback") {
           value = value(self._store);
         }
@@ -153,7 +170,3 @@ export class ReactiveState {
     return true;
   }
 }
-
-export type StateStore = Record<string, any>;
-
-export type ReactiveCallback = (property: string, newValue: any, previousValue: any) => void;

@@ -35,10 +35,13 @@
         <button attr:disabled="{testContext.isDisabled}" set:text="{testContext.buttonLabel}" on:click="{testContext.handleClick}">
           Testing
         </button>
+
+        <le-if condition="{testContext.isDisabled}">
+          <button>Another Button</button>
+        </le-if>
       </le-context>
   </div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>
-
 </html>

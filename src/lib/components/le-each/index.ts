@@ -1,5 +1,5 @@
 import LogicalElement from "../../core/logical-element";
-import { getContextNamespace, lookupProperty } from "../../core/context";
+import { getContextNamespace, lookupProperty } from "../../core/reactive-state";
 
 class LeEach extends LogicalElement {
   /* get template() {
