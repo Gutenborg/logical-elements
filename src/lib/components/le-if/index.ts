@@ -1,11 +1,10 @@
 import LogicalElement from "../../core/logical-element";
-import { ReactiveState } from "../../core/reactive-state";
 
 class LeIf extends LogicalElement {
   static observedAttributes = ["condition"];
 
   get condition() {
-    return this.getAttribute("condition");
+    return this.getAttributeFromState("condition");
   }
 
   onUpdated() {
@@ -31,11 +30,11 @@ class LeIf extends LogicalElement {
       return true;
     }
 
-    if (condition === "false" || condition === null || !ReactiveState.isStateValue(condition)) {
+    if (condition === "false" || condition === null) {
       return false;
     }
 
-    return !!this.getStateValue(condition);
+    return condition;
   }
 }
 

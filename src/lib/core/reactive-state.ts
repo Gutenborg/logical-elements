@@ -13,7 +13,7 @@ export class ReactiveState {
   }
 
   public static parsePath (fullPath: string | null) {
-    if (typeof fullPath !== "string") {
+    if (typeof fullPath !== "string" || !ReactiveState.isStateValue(fullPath)) {
       return { name: "", path: "" };
     }
 
@@ -143,7 +143,7 @@ export class ReactiveState {
 
   public notify (property: string, newValue: any, previousValue: any) {
     for(const subscriber in this._subscribers) {
-      this._subscribers[subscriber](property, newValue, previousValue);
+      this._subscribers[subscriber](property, previousValue, newValue);
     }
   }
 

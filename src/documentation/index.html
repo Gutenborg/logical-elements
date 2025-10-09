@@ -16,13 +16,24 @@
 
 <body>
   <div id="app">
+    <le-context name="anotherTestContext">
+      <script>
+        function anotherTestContext(state) {
+          const handleToggle = () => {
+            state.store.test = !state.store.test;
+          }
+
+          return { handleToggle, test: true };
+        }
+      </script>
+
       <le-context name="testContext">
         <script data-context>
           function testContext(state) {
             const handleClick = (event) => {
               state.store.count++
             }
-            
+
             return {
               count: 0,
               buttonLabel: state.derive((store) => store.count < 5 ? `Count is low: ${store.count}` : `Count is high: ${store.count}`),
@@ -32,16 +43,21 @@
           }
         </script>
 
-        <button attr:disabled="{testContext.isDisabled}" set:text="{testContext.buttonLabel}" on:click="{testContext.handleClick}">
+        <button attr:disabled="{testContext.isDisabled}" set:text="{testContext.buttonLabel}"
+          on:click="{testContext.handleClick}">
           Testing
         </button>
+
+        <button on:click="{anotherTestContext.handleToggle}">Toggle AnotherTestContext</button>
 
         <le-if condition="{testContext.isDisabled}">
           <button>Another Button</button>
         </le-if>
       </le-context>
+    </le-context>
   </div>
 
   <script type="module" src="/src/main.ts"></script>
 </body>
+
 </html>

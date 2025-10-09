@@ -3,6 +3,10 @@ import { ReactiveState } from "./reactive-state";
 import { LogicalElementEventMap } from "./logical-element";
 import { HTMLAttributeValue } from "./shared-types";
 
+interface ContextElement {
+  onStateUpdated?(property: string, previousValue: any, newValue: any): void;
+}
+
 interface LogicalElementManagedHanders {
   callback: EventListenerOrEventListenerObject;
   eventType: keyof ElementEventMap | keyof LogicalElementEventMap | string;
@@ -70,7 +74,7 @@ class ContextElement extends LogicalElement {
     composed: false,
   };
 
-  stateUpdatedCallback(property: string, newValue: any, previousValue: any) {
+  stateUpdatedCallback(property: string, previousValue: any, newValue: any) {
     // Schedule the update callback
     this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
 
@@ -250,11 +254,6 @@ class ContextElement extends LogicalElement {
 
           this.reactiveNamespaces[namespace].call(this, element, mappedMatches);
         }
-      }
-
-      if (element instanceof LogicalElement && !element.disableAutomaticStateUpdates) {
-        // Ask the element to update
-        element.updateScheduler.scheduleUpdate(element.updatedCallback.bind(element));
       }
     }
   }

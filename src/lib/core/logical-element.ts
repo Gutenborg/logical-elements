@@ -28,7 +28,7 @@ interface LogicalElement extends HTMLElement {
   onConnected?(): void;
   onDisconnected?(): void;
   onParsed?(): void;
-  onStateUpdated?(property: string, previousValue: any, newValue: any): void;
+  onProviderUpdated?(property: string, previousValue: any, newValue: any): void;
   /** Called when either an `attribute-changed`, `children-modified`, or `parsed` event occur. This callback
    * is debounced and will only trigger once even if multiple updates occur. */
   onUpdated?(): void;
@@ -49,8 +49,14 @@ export interface LogicalElementEventMap {
   "le-connected": CustomEvent<null>;
   "le-disconnected": CustomEvent<null>;
   "le-parsed": CustomEvent<null>;
+  "le-provider-updated": CustomEvent<StateUpdatedEventDetail[]>;
   "le-state-updated": CustomEvent<StateUpdatedEventDetail[]>;
   "le-updated": CustomEvent<null>;
+}
+
+interface ProviderSubscription {
+  attribute: string;
+  id: number;
 }
 
 declare global {
@@ -60,9 +66,10 @@ declare global {
 class LogicalElement extends HTMLElement {
   // MARK: Properties
   private _childrenObserver: MutationObserver | null = null;
-  public updateScheduler = new UpdateScheduler();
-  public isParsed: boolean = false;
-  public disableAutomaticStateUpdates = false;
+  private _providerSubscriptions: ProviderSubscription[] = [];
+  readonly updateScheduler = new UpdateScheduler();
+  protected isParsed: boolean = false;
+  public disableProviderUpdates = false;
 
   public get stateProviders() {
     const providers: Record<string, ReactiveState> = {};
@@ -97,6 +104,35 @@ class LogicalElement extends HTMLElement {
     previousValue: HTMLAttributeValue,
     newValue: HTMLAttributeValue
   ) {
+    // Handle state subscriptions
+    if (ReactiveState.isStateValue(newValue)) {
+      // Determine if we need to create a new subscription
+      const { name: previousProvider } = ReactiveState.parsePath(previousValue);
+      const { name: newProvider } = ReactiveState.parsePath(newValue);
+
+      if (previousProvider !== newProvider) {
+        // Cleanup old subscription if there is one
+        const previousStateProvider = this.getStateProvider(previousValue);
+        const subscriptionIndex = this._providerSubscriptions.findIndex((subscription) => subscription.attribute === attribute);
+
+        if (previousStateProvider instanceof ReactiveState && subscriptionIndex >= 0) {
+          previousStateProvider.unsubscribe(subscriptionIndex)
+        }
+
+        // Create new subscription
+        const stateProvider = this.stateProviders[newProvider];
+        const subscriptionId = stateProvider?.subscribe(
+          (property, propertyPreviousValue, propertyNewValue) => {
+            this.providerUpdatedCallback(property, propertyPreviousValue, propertyNewValue);
+          });
+  
+        if (typeof subscriptionId === "number") {
+          console.log("Subscribing!", attribute, subscriptionId);
+          this._providerSubscriptions.push({ attribute, id: subscriptionId });
+        }
+      }
+    }
+
     if (!this.isParsed) {
       // These are initial attribute assignments, not changes
       return;
@@ -290,6 +326,39 @@ class LogicalElement extends HTMLElement {
     }
   }
 
+  // MARK: Provider Updated
+  /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
+   * @prop bubbles - Defaults to false
+   * @prop cancelable - Defaults to false
+   * @prop composed - Defaults to false
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/Event/Event#options
+   */
+  public providerUpdatedEventOptions: EventInit = {
+    bubbles: false,
+    cancelable: false,
+    composed: false,
+  };
+
+  providerUpdatedCallback(property: string, previousValue: any, newValue: any) {
+    if (!this.disableProviderUpdates) {
+      this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
+    }
+
+    if (typeof this.onProviderUpdated === "function") {
+      this.onProviderUpdated(property, previousValue, newValue);
+    }
+
+    // Perform component consumer logic
+    this.dispatchEvent(
+      new CustomEvent("le-provider-updated", {
+        ...this.updatedEventOptions,
+        detail: {
+          property, previousValue, newValue
+        },
+      })
+    );
+  }
+
   // MARK: Updated
   /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to false
@@ -318,6 +387,20 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Utility Methods
+  getAttributeFromState(attributeName: string){
+    const attributeValue = super.getAttribute(attributeName);
+
+    if (!ReactiveState.isStateValue(attributeValue)) {
+      return attributeValue;
+    }
+
+    // Value needs to be looked up in a state object
+    const { name, path } = ReactiveState.parsePath(attributeValue);
+    const stateValue = this.stateProviders[name]?.lookupValue(path);
+
+    return stateValue;
+  }
+
   getStateProvider(fullPath: string | null): ReactiveState | undefined {
     const { name } = ReactiveState.parsePath(fullPath);
 
