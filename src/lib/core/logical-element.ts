@@ -59,6 +59,23 @@ interface ProviderSubscription {
   id: number;
 }
 
+type LogicalElementReactiveNamespaces = Map<
+  string,
+  LogicalElementReactiveHandler
+>;
+
+export type LogicalElementReactiveHandler = (
+  element: HTMLElement,
+  matches: LogicalElementReactiveNamespaceMatch[],
+  instance?: LogicalElement
+) => void;
+
+export interface LogicalElementReactiveNamespaceMatch {
+  name: string;
+  localName: string;
+  value: HTMLAttributeValue;
+}
+
 declare global {
   interface DocumentEventMap extends LogicalElementEventMap {}
 }
@@ -68,8 +85,11 @@ class LogicalElement extends HTMLElement {
   private _childrenObserver: MutationObserver | null = null;
   private _providerSubscriptions: ProviderSubscription[] = [];
   readonly updateScheduler = new UpdateScheduler();
-  protected isParsed: boolean = false;
+  protected isParsed = false;
+  public isInitialized = false;
   public disableProviderUpdates = false;
+
+  public reactiveNamespaces: LogicalElementReactiveNamespaces = new Map();
 
   public get stateProviders() {
     const providers: Record<string, ReactiveState> = {};
@@ -297,9 +317,6 @@ class LogicalElement extends HTMLElement {
   };
 
   parsedCallback() {
-    // Schedule the update callback
-    this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
-
     // Check if element is parsed
     // Work our way up the parent tree looking for a sibling node
     for (
@@ -317,9 +334,11 @@ class LogicalElement extends HTMLElement {
     }
 
     if (this.isParsed) {
-      // Get reactive children
+      // Schedule the update callback
+      this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
+
+      // Perform component author logic
       if (typeof this.onParsed === "function") {
-        // Perform component author logic
         this.onParsed();
       }
 
@@ -347,7 +366,7 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Provider Updated
-  /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
+  /** The default event options for the 'le-provider-updated' custom event. Can be overwritten by the component author
    * @prop bubbles - Defaults to false
    * @prop cancelable - Defaults to false
    * @prop composed - Defaults to false
@@ -395,6 +414,13 @@ class LogicalElement extends HTMLElement {
   };
 
   updatedCallback() {
+    // Component is ready for reactivity
+    if (!this.isInitialized) {
+      this.isInitialized = true;
+    }
+
+    this.handleReactiveNamespaces();
+
     if (typeof this.onUpdated === "function") {
       this.onUpdated();
     }
@@ -433,6 +459,53 @@ class LogicalElement extends HTMLElement {
     const { name, path } = ReactiveState.parsePath(fullPath);
 
     return this.stateProviders[name]?.lookupValue(path);
+  }
+
+  handleReactiveNamespaces() {
+    if (!this.isParsed || this.reactiveNamespaces.size <= 0) {
+      // Element is not ready for reactivity
+      return;
+    }
+
+    // Create a treewalker to step through child nodes and find reactive children
+    const treewalker = document.createTreeWalker(this, NodeFilter.SHOW_ELEMENT);
+    let currentNode = treewalker.nextNode();
+
+    // Loop through the children
+    while (currentNode) {
+      const element = currentNode as HTMLElement;
+
+      if (element instanceof ContextElement) {
+        // CurrentNode is a context element, tell it to handle updating its own children and skip it
+        // This is needed because the current context may not contain values required by children of another context
+        element.handleReactiveNamespaces();
+        currentNode = treewalker.nextSibling();
+      } else {
+        // Navigate to the next node
+        currentNode = treewalker.nextNode();
+      }
+
+      // Get attributes from element and look for our defined reactive attributes
+      for (const [namespace, handler] of this.reactiveNamespaces) {
+        const matches = element
+          .getAttributeNames()
+          .filter((attribute) => attribute.startsWith(`${namespace}:`));
+
+        if (matches.length > 0) {
+          const mappedMatches = matches.map((match) => {
+            return {
+              name: match,
+              localName: match.split(":")[1],
+              value: element.getAttribute(match),
+            };
+          });
+
+          if (typeof handler === "function") {
+            handler.call(this, element, mappedMatches, this);
+          }
+        }
+      }
+    }
   }
 }
 

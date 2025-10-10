@@ -68,12 +68,11 @@
           </le-if>
 
           <le-each list="{testContext.favoriteFruits}" as="fruit">
-            <!-- This template will be created for every item in the context -->
-            <template id="favorite-fruits">
-              <li set:text="{fruit}"></li>
+            <template>
+              <li set:text="{testContext.buttonLabel}"></li>
             </template>
 
-            <ul set:template="{favorite-fruits}"></ul>
+            <ul each:apply-template></ul>
           </le-each>
 
           <le-else>

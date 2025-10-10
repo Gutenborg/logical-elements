@@ -1,4 +1,4 @@
-import LogicalElement, { LogicalElementEventMap } from "../../core/logical-element";
+import LogicalElement from "../../core/logical-element";
 import LeEach from "../le-each";
 import LeIf from "../le-if";
 
@@ -41,8 +41,6 @@ class LeElse extends LogicalElement {
 
   // TO-DO: Make sure this runs when a relevant sibling calls their updatedCallback() method
   onUpdated() {
-    console.log("Updating le-else!");
-    
     let shouldHide = false;
     const relevantSiblings = this.relevantSiblings;
     

@@ -1,60 +1,44 @@
-import LogicalElement from "../../core/logical-element";
+import LogicalElement, { LogicalElementReactiveNamespaceMatch } from "../../core/logical-element";
 
 type Iterable = Array<any>;
 
+// TO-DO: Think about what this element is actually supposed to do
 class LeEach extends LogicalElement {
   get template() {
-    return this.querySelector<HTMLTemplateElement>("template[data-for]");
-  }
-
-  get iterator() {
-    const attributeValue = this.getAttribute("list");
-    const stateValue = this.getStateValue(attributeValue);
-
-    if (!this.isIterable(stateValue)) {
-      // There is no attribute to look up
-      console.warn(
-        "Expected a state derived value, but instead received: ",
-        stateValue
-      );
-      return [];
-    }
-
-    return stateValue as Iterable;
+    return this.querySelector<HTMLTemplateElement>("template");
   }
 
   get isEmpty() {
-    if (this.iterator.length <= 0) {
+    if (this.list.length <= 0) {
       return false;
     }
 
     return true;
   }
 
+  get list (): Iterable {
+    const attributeValue = this.getAttribute("list");
+    const stateValue = this.getStateValue(attributeValue);
+
+    if (!this.isIterable(stateValue)) {
+      return [];
+    }
+
+    else return stateValue;
+  }
+
+  onConnected() {
+    this.reactiveNamespaces.set("each", this.updateReactiveEach);
+  }
+
   onUpdated() {
+    
+  }
+
+  updateReactiveEach(element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) {
+    console.log(element, matches);
+
     const template = this.template;
-    const templateDestination = this.querySelector("[set:template]");
-
-    if (template === null || templateDestination === null) {
-      // There is no template or a container to apply
-      return;
-    }
-
-    const iterator = this.iterator;
-
-    if (iterator.length <= 0) {
-      // Nothing to iterate on
-      return;
-    }
-
-    // Remove all previously rendered children from the container
-    templateDestination.childNodes.forEach((node) => node.remove());
-
-    iterator.forEach((value) => {
-      const renderedTemplate = this.renderTemplate(value, template);
-
-      templateDestination.appendChild(renderedTemplate);
-    });
   }
 
   isIterable(value: any) {
