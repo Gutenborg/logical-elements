@@ -20,17 +20,17 @@ export interface StateUpdatedEventDetail {
 
 type LogicalElementDefaultReactiveNamespaces = "attr" | "on" | "set";
 
-type LogicalElementReactiveNamespaces = Record<
+type LogicalElementReactiveNamespaces = Map<
   LogicalElementDefaultReactiveNamespaces | string,
   LogicalElementReactiveHandler
 >;
 
-type LogicalElementReactiveHandler = (
+export type LogicalElementReactiveHandler = (
   element: HTMLElement,
   matches: LogicalElementReactiveNamespaceMatch[]
 ) => void;
 
-interface LogicalElementReactiveNamespaceMatch {
+export interface LogicalElementReactiveNamespaceMatch {
   name: string;
   localName: string;
   value: HTMLAttributeValue;
@@ -52,12 +52,13 @@ class ContextElement extends LogicalElement {
 
   public isInitialized: boolean = false;
 
-  public reactiveNamespaces: LogicalElementReactiveNamespaces = {
-    attr: this.updateReactiveAttributes,
-    on: this.updateReactiveListeners,
-    set: this.updateReactiveProperties,
-  };
+  public reactiveNamespaces: LogicalElementReactiveNamespaces = new Map([
+    ["attr", this.updateReactiveAttributes],
+    ["on", this.updateReactiveListeners],
+    ["set", this.updateReactiveProperties],
+  ]);
 
+  // MARK: Connected
   connectedCallback() {
     this._stateSubscriberId = this.state.subscribe(
       this.stateUpdatedCallback.bind(this)
@@ -66,6 +67,7 @@ class ContextElement extends LogicalElement {
     super.connectedCallback();
   }
 
+  // MARK: Disconnected
   disconnectedCallback() {
     this.state.unsubscribe(this._stateSubscriberId);
 
@@ -108,18 +110,6 @@ class ContextElement extends LogicalElement {
   }
 
   // MARK: Updated
-  /** The default event options for the 'le-parsed' custom event. Can be overwritten by the component author
-   * @prop bubbles - Defaults to false
-   * @prop cancelable - Defaults to false
-   * @prop composed - Defaults to false
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/Event/Event#options
-   */
-  public updatedEventOptions: EventInit = {
-    bubbles: false,
-    cancelable: false,
-    composed: false,
-  };
-
   updatedCallback() {
     if (!this.isInitialized) {
       // The component is ready for reactivity and outside interactions
@@ -185,11 +175,11 @@ class ContextElement extends LogicalElement {
         matchValue = this.getStateValue(matchValue);
       }
 
-      // TO-DO: think of a way to let component authors extend this list
       switch (match.localName) {
         case "text":
           element.textContent = matchValue;
           break;
+        // case "template":
         // case "popover":
         default:
           break;
@@ -271,7 +261,7 @@ class ContextElement extends LogicalElement {
       }
 
       // Get attributes from element and look for our defined reactive attributes
-      for (const namespace in this.reactiveNamespaces) {
+      for (const [namespace, handler] of this.reactiveNamespaces) {
         const matches = element
           .getAttributeNames()
           .filter((attribute) => attribute.startsWith(`${namespace}:`));
@@ -285,7 +275,10 @@ class ContextElement extends LogicalElement {
             };
           });
 
-          this.reactiveNamespaces[namespace].call(this, element, mappedMatches);
+
+          if (typeof handler === "function") {
+            handler.call(this, element, mappedMatches);
+          }
         }
       }
     }
