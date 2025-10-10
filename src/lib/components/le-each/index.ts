@@ -1,92 +1,82 @@
 import LogicalElement from "../../core/logical-element";
 
+type Iterable = Array<any>;
+
 class LeEach extends LogicalElement {
-  /* get template() {
+  get template() {
     return this.querySelector<HTMLTemplateElement>("template[data-for]");
   }
 
-  get templateContainer () {
-    const containerId = this.template?.dataset.for;
+  get iterator() {
+    const attributeValue = this.getAttribute("list");
+    const stateValue = this.getStateValue(attributeValue);
 
-    if (typeof containerId !== "string") {
-      return null;
-    }
-    
-    return this.querySelector(`#${containerId}`);
-  }
-
-  get iterator () {
-    const attributeValue = this.getAttribute("for");
-    const contextNamespace = getContextNamespace(attributeValue);
-
-    if (typeof attributeValue !== "string" || typeof contextNamespace !== "string") {
+    if (!this.isIterable(stateValue)) {
       // There is no attribute to look up
+      console.warn(
+        "Expected a state derived value, but instead received: ",
+        stateValue
+      );
       return [];
     }
 
-    
-    const context = this.contextProviders[contextNamespace]?.context;
-    
-    if (context === undefined || context === null) {
-      return [];
-    }
-
-    const value = lookupProperty(attributeValue, context.store);
-
-    if (!Array.isArray(value)) {
-      return [];
-    } else {
-      return value;
-    }
+    return stateValue as Iterable;
   }
 
-  get isEmpty () {
+  get isEmpty() {
     if (this.iterator.length <= 0) {
       return false;
-    } else {
-      return true;
     }
+
+    return true;
   }
 
   onUpdated() {
     const template = this.template;
-    const container = this.templateContainer;
+    const templateDestination = this.querySelector("[set:template]");
 
-    if (template === null || container === null) {
+    if (template === null || templateDestination === null) {
       // There is no template or a container to apply
       return;
     }
-    
+
     const iterator = this.iterator;
-    
+
     if (iterator.length <= 0) {
       // Nothing to iterate on
       return;
     }
-    
-    
+
     // Remove all previously rendered children from the container
-    container.childNodes.forEach((node) => node.remove());
-    
+    templateDestination.childNodes.forEach((node) => node.remove());
+
     iterator.forEach((value) => {
       const renderedTemplate = this.renderTemplate(value, template);
-      
-      container.appendChild(renderedTemplate);
+
+      templateDestination.appendChild(renderedTemplate);
     });
+  }
+
+  isIterable(value: any) {
+    if (Array.isArray(value) || (typeof value === "object" && value !== null)) {
+      return true;
+    }
+
+    return false;
   }
 
   renderTemplate(item: any, template: HTMLTemplateElement) {
     const clone = document.importNode(template.content, true);
 
     // Apply each value to the template and append it as a child of the container
-    const assignments = clone.querySelectorAll("[data-assign]");
+    /* const assignments = clone.querySelectorAll("[data-assign]");
 
     assignments.forEach((element) => {
       element.textContent = item;
-    });
+    }); */
 
-     return clone;
-  } */
+    return clone;
+  }
 }
 
 export default LeEach;

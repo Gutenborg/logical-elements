@@ -1,81 +1,88 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + TS</title>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vite + TS</title>
+    <style>
+      :not(:defined) {
+        display: none;
+      }
+    </style>
+  </head>
 
-  <style>
-    :not(:defined) {
-      display: none;
-    }
-  </style>
-</head>
-
-<body>
-  <div id="app">
-    <le-context name="anotherTestContext">
-      <script>
-        function anotherTestContext(state) {
-          const handleToggle = () => {
-            state.store.test = !state.store.test;
-          }
-
-          return { handleToggle, test: true };
-        }
-      </script>
-
-      <le-context name="testContext">
-        <script data-context>
-          function testContext(state) {
-            const handleClick = (event) => {
-              state.store.count++
-            }
-
-            return {
-              count: 0,
-              buttonLabel: state.derive((store) => store.count < 5 ? `Count is low: ${store.count}` : `Count is high: ${store.count}`),
-              handleClick,
-              isDisabled: state.derive((store) => store.count > 10),
-              favoriteFruits: ["Apple", "Banana", "Peach", "Raspberry"],
+  <body>
+    <div id="app">
+      <le-context name="anotherTestContext">
+        <script>
+          function anotherTestContext(state) {
+            const handleToggle = () => {
+              state.store.test = !state.store.test;
             };
+
+            return { handleToggle, test: true };
           }
         </script>
 
-        <button attr:disabled="{testContext.isDisabled}" set:text="{testContext.buttonLabel}"
-          on:click="{testContext.handleClick}">
-          Testing
-        </button>
+        <le-context name="testContext">
+          <script data-context>
+            function testContext(state) {
+              const handleClick = (event) => {
+                state.store.count++;
+              };
 
-        <button on:click="{anotherTestContext.handleToggle}">Toggle AnotherTestContext</button>
+              return {
+                count: 0,
+                buttonLabel: state.derive((store) =>
+                  store.count < 5
+                    ? `Count is low: ${store.count}`
+                    : `Count is high: ${store.count}`
+                ),
+                handleClick,
+                isDisabled: state.derive((store) => store.count > 10),
+                favoriteFruits: ["Apple", "Banana", "Peach", "Raspberry"],
+              };
+            }
+          </script>
 
-        <le-if condition="{testContext.isDisabled}">
-          <button>Another Button</button>
-        </le-if>
+          <button
+            attr:disabled="{testContext.isDisabled}"
+            set:text="{testContext.buttonLabel}"
+            on:click="{testContext.handleClick}"
+          >
+            Testing
+          </button>
 
-        <le-if condition="{anotherTestContext.test}">
-          <p>Another le-if test</p>
-        </le-if>
+          <button on:click="{anotherTestContext.handleToggle}">
+            Toggle AnotherTestContext
+          </button>
 
-        <le-each for="$testLeEach.fruits" as="$fruit">
-          <!-- This template will be created for every item in the context -->
-          <template data-for="favorite-fruits">
-            <li data-assign="$fruit"></li>
-          </template>
+          <le-if condition="{testContext.isDisabled}">
+            <button>Another Button</button>
+          </le-if>
 
-          <ul id="favorite-fruits"></ul>
-        </le-each>
+          <le-if condition="{anotherTestContext.test}">
+            <p>Another le-if test</p>
+          </le-if>
 
-        <le-else>
-          <p>An le-else test</p>
-        </le-else>
+          <le-each list="{testContext.favoriteFruits}" as="fruit">
+            <!-- This template will be created for every item in the context -->
+            <template id="favorite-fruits">
+              <li set:text="{fruit}"></li>
+            </template>
+
+            <ul set:template="{favorite-fruits}"></ul>
+          </le-each>
+
+          <le-else>
+            <p>An le-else test</p>
+          </le-else>
+        </le-context>
       </le-context>
-    </le-context>
-  </div>
+    </div>
 
-  <script type="module" src="/src/main.ts"></script>
-</body>
-
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

@@ -41,7 +41,7 @@ interface AttributeChangedEventDetail {
   newValue: HTMLAttributeValue;
 }
 
-interface ChildrenModifiedEventDetail extends MutationRecord { }
+interface ChildrenModifiedEventDetail extends MutationRecord {}
 
 export interface LogicalElementEventMap {
   "le-attribute-changed": CustomEvent<AttributeChangedEventDetail>;
@@ -60,7 +60,7 @@ interface ProviderSubscription {
 }
 
 declare global {
-  interface DocumentEventMap extends LogicalElementEventMap { }
+  interface DocumentEventMap extends LogicalElementEventMap {}
 }
 
 class LogicalElement extends HTMLElement {
@@ -75,7 +75,11 @@ class LogicalElement extends HTMLElement {
     const providers: Record<string, ReactiveState> = {};
 
     // Find all parent logical elements
-    for (let parent: HTMLElement | null = this; parent !== null && parent !== document.body; parent = parent.parentElement) {
+    for (
+      let parent: HTMLElement | null = this;
+      parent !== null && parent !== document.body;
+      parent = parent.parentElement
+    ) {
       const parentName = parent.getAttribute("name");
 
       if (parent instanceof ContextElement && typeof parentName === "string") {
@@ -113,19 +117,29 @@ class LogicalElement extends HTMLElement {
       if (previousProvider !== newProvider) {
         // Cleanup old subscription if there is one
         const previousStateProvider = this.getStateProvider(previousValue);
-        const subscriptionIndex = this._providerSubscriptions.findIndex((subscription) => subscription.attribute === attribute);
+        const subscriptionIndex = this._providerSubscriptions.findIndex(
+          (subscription) => subscription.attribute === attribute
+        );
 
-        if (previousStateProvider instanceof ReactiveState && subscriptionIndex >= 0) {
-          previousStateProvider.unsubscribe(subscriptionIndex)
+        if (
+          previousStateProvider instanceof ReactiveState &&
+          subscriptionIndex >= 0
+        ) {
+          previousStateProvider.unsubscribe(subscriptionIndex);
         }
 
         // Create new subscription
         const stateProvider = this.stateProviders[newProvider];
         const subscriptionId = stateProvider?.subscribe(
           (property, propertyPreviousValue, propertyNewValue) => {
-            this.providerUpdatedCallback(property, propertyPreviousValue, propertyNewValue);
-          });
-  
+            this.providerUpdatedCallback(
+              property,
+              propertyPreviousValue,
+              propertyNewValue
+            );
+          }
+        );
+
         if (typeof subscriptionId === "number") {
           this._providerSubscriptions.push({ attribute, id: subscriptionId });
         }
@@ -288,8 +302,15 @@ class LogicalElement extends HTMLElement {
 
     // Check if element is parsed
     // Work our way up the parent tree looking for a sibling node
-    for (let parent: HTMLElement | ParentNode | null = this; parent !== null; parent = parent.parentNode) {
-      if (parent.nextSibling !== null || (parent.parentNode && parent.parentNode.lastChild === parent)) {
+    for (
+      let parent: HTMLElement | ParentNode | null = this;
+      parent !== null;
+      parent = parent.parentNode
+    ) {
+      if (
+        parent.nextSibling !== null ||
+        (parent.parentNode && parent.parentNode.lastChild === parent)
+      ) {
         this.isParsed = true;
         break;
       }
@@ -352,7 +373,9 @@ class LogicalElement extends HTMLElement {
       new CustomEvent("le-provider-updated", {
         ...this.updatedEventOptions,
         detail: {
-          property, previousValue, newValue
+          property,
+          previousValue,
+          newValue,
         },
       })
     );
@@ -386,7 +409,7 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Utility Methods
-  getAttributeFromState(attributeName: string){
+  getAttributeFromState(attributeName: string) {
     const attributeValue = super.getAttribute(attributeName);
 
     if (!ReactiveState.isStateValue(attributeValue)) {
@@ -405,7 +428,7 @@ class LogicalElement extends HTMLElement {
 
     return this.stateProviders[name];
   }
-  
+
   getStateValue(fullPath: string | null) {
     const { name, path } = ReactiveState.parsePath(fullPath);
 

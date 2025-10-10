@@ -20,9 +20,15 @@ export interface StateUpdatedEventDetail {
 
 type LogicalElementDefaultReactiveNamespaces = "attr" | "on" | "set";
 
-type LogicalElementReactiveNamespaces = Record<LogicalElementDefaultReactiveNamespaces | string, LogicalElementReactiveHandler>;
+type LogicalElementReactiveNamespaces = Record<
+  LogicalElementDefaultReactiveNamespaces | string,
+  LogicalElementReactiveHandler
+>;
 
-type LogicalElementReactiveHandler = (element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) => void;
+type LogicalElementReactiveHandler = (
+  element: HTMLElement,
+  matches: LogicalElementReactiveNamespaceMatch[]
+) => void;
 
 interface LogicalElementReactiveNamespaceMatch {
   name: string;
@@ -33,7 +39,10 @@ interface LogicalElementReactiveNamespaceMatch {
 /** Provides an element that has a state and allows you to place a state-defining script within it */
 class ContextElement extends LogicalElement {
   // MARK: Properties
-  private _managedListeners = new WeakMap<HTMLElement, LogicalElementManagedHanders[]>();
+  private _managedListeners = new WeakMap<
+    HTMLElement,
+    LogicalElementManagedHanders[]
+  >();
   private _state = new ReactiveState();
   private _stateSubscriberId: number | null = null;
 
@@ -47,10 +56,12 @@ class ContextElement extends LogicalElement {
     attr: this.updateReactiveAttributes,
     on: this.updateReactiveListeners,
     set: this.updateReactiveProperties,
-  }
+  };
 
   connectedCallback() {
-    this._stateSubscriberId = this.state.subscribe(this.stateUpdatedCallback.bind(this));
+    this._stateSubscriberId = this.state.subscribe(
+      this.stateUpdatedCallback.bind(this)
+    );
 
     super.connectedCallback();
   }
@@ -134,7 +145,10 @@ class ContextElement extends LogicalElement {
     return convertedValue;
   }
 
-  updateReactiveAttributes(element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) {
+  updateReactiveAttributes(
+    element: HTMLElement,
+    matches: LogicalElementReactiveNamespaceMatch[]
+  ) {
     for (const match of matches) {
       let matchValue = match.value;
 
@@ -159,16 +173,19 @@ class ContextElement extends LogicalElement {
     }
   }
 
-  updateReactiveProperties(element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) {
-    
+  updateReactiveProperties(
+    element: HTMLElement,
+    matches: LogicalElementReactiveNamespaceMatch[]
+  ) {
     for (const match of matches) {
       let matchValue: any = match.value;
-      
+
       if (matchValue?.startsWith("{") && matchValue?.endsWith("}")) {
         // Value is a context lookup and we need to fetch it
         matchValue = this.getStateValue(matchValue);
       }
-      
+
+      // TO-DO: think of a way to let component authors extend this list
       switch (match.localName) {
         case "text":
           element.textContent = matchValue;
@@ -180,7 +197,10 @@ class ContextElement extends LogicalElement {
     }
   }
 
-  updateReactiveListeners(element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) {
+  updateReactiveListeners(
+    element: HTMLElement,
+    matches: LogicalElementReactiveNamespaceMatch[]
+  ) {
     // Compare the matches to the list of current handlers to determine if we need to remove any
     const elementHandlers = this._managedListeners.get(element) ?? [];
     const assignedHandlers: LogicalElementManagedHanders[] = [];
@@ -188,13 +208,19 @@ class ContextElement extends LogicalElement {
     for (const match of matches) {
       if (!match.value || !ReactiveState.isStateValue(match.value)) {
         // Value is not a context value and we cannot lookup the function to use as a handler
-        console.warn("Expected a state derived value, but instead received: ", match.value);
+        console.warn(
+          "Expected a state derived value, but instead received: ",
+          match.value
+        );
         return;
       }
 
       const handler = this.getStateValue(match.value);
 
-      if (typeof handler === "function" && !elementHandlers.some((h) => h === handler)) {
+      if (
+        typeof handler === "function" &&
+        !elementHandlers.some((h) => h === handler)
+      ) {
         // Add event listener
         element.addEventListener(match.localName, handler);
       }
@@ -204,8 +230,13 @@ class ContextElement extends LogicalElement {
     }
 
     // Compare assigned handlers to current handlers and remove any abandoned handlers
-    for(const handler of elementHandlers) {
-      if (!assignedHandlers.some((h) => h.callback === handler.callback && h.eventType === handler.eventType)) {
+    for (const handler of elementHandlers) {
+      if (
+        !assignedHandlers.some(
+          (h) =>
+            h.callback === handler.callback && h.eventType === handler.eventType
+        )
+      ) {
         // Handle has been abandoned and should be removed
         element.removeEventListener(handler.eventType, handler.callback);
       }
@@ -220,15 +251,15 @@ class ContextElement extends LogicalElement {
       // Element is not ready for reactivity
       return;
     }
-    
+
     // Create a treewalker to step through child nodes and find reactive children
     const treewalker = document.createTreeWalker(this, NodeFilter.SHOW_ELEMENT);
     let currentNode = treewalker.nextNode();
-    
+
     // Loop through the children
     while (currentNode) {
       const element = currentNode as HTMLElement;
-      
+
       if (element instanceof ContextElement) {
         // CurrentNode is a context element, tell it to handle updating its own children and skip it
         // This is needed because the current context may not contain values required by children of another context
@@ -238,18 +269,20 @@ class ContextElement extends LogicalElement {
         // Navigate to the next node
         currentNode = treewalker.nextNode();
       }
-      
+
       // Get attributes from element and look for our defined reactive attributes
       for (const namespace in this.reactiveNamespaces) {
-        const matches = element.getAttributeNames().filter((attribute) => attribute.startsWith(`${namespace}:`));
-        
+        const matches = element
+          .getAttributeNames()
+          .filter((attribute) => attribute.startsWith(`${namespace}:`));
+
         if (matches.length > 0) {
           const mappedMatches = matches.map((match) => {
             return {
               name: match,
               localName: match.split(":")[1],
               value: element.getAttribute(match),
-            }
+            };
           });
 
           this.reactiveNamespaces[namespace].call(this, element, mappedMatches);
