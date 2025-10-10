@@ -127,7 +127,6 @@ class LogicalElement extends HTMLElement {
           });
   
         if (typeof subscriptionId === "number") {
-          console.log("Subscribing!", attribute, subscriptionId);
           this._providerSubscriptions.push({ attribute, id: subscriptionId });
         }
       }
@@ -367,8 +366,8 @@ class LogicalElement extends HTMLElement {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Event/Event#options
    */
   public updatedEventOptions: EventInit = {
-    bubbles: false,
-    cancelable: false,
+    bubbles: true,
+    cancelable: true,
     composed: false,
   };
 

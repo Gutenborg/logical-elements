@@ -1,5 +1,4 @@
 import LogicalElement from "../../core/logical-element";
-import { getContextNamespace, lookupProperty } from "../../core/reactive-state";
 
 class LeEach extends LogicalElement {
   /* get template() {
@@ -62,7 +61,6 @@ class LeEach extends LogicalElement {
     
     if (iterator.length <= 0) {
       // Nothing to iterate on
-      
       return;
     }
     
@@ -75,7 +73,6 @@ class LeEach extends LogicalElement {
       
       container.appendChild(renderedTemplate);
     });
-    
   }
 
   renderTemplate(item: any, template: HTMLTemplateElement) {

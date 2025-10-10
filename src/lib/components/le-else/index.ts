@@ -1,54 +1,98 @@
-import LogicalElement from "../../core/logical-element";
+import LogicalElement, { LogicalElementEventMap } from "../../core/logical-element";
+import LeEach from "../le-each";
 import LeIf from "../le-if";
 
-type RelevantSiblingType = "le-if" | "le-each";
+type RelevantSiblingTypes = "le-if" | "le-each" | string;
+type RelevantSiblingElements = LeIf | LeEach | HTMLElement;
+type RelevantSiblingIsShown = (sibling: RelevantSiblingElements) => boolean;
+type RelevantSiblings = Record<RelevantSiblingTypes | string, RelevantSiblingIsShown>;
 
 class LeElse extends LogicalElement {
-  validSiblings: RelevantSiblingType[] = ["le-each", "le-if"];
-  siblingType: RelevantSiblingType | null = null;
+  public relevantSiblingHandlers: RelevantSiblings = {
+    "le-each": this.checkLeEach,
+    "le-if": this.checkLeIf,
+  };
+
 
   get relevantSiblings() {
-    if (this.siblingType === null || this.parentElement === null) {
-      return [];
+    let returnValue: HTMLElement[] = [];
+    
+    if (!(this.parentElement instanceof HTMLElement)) {
+      return returnValue;
     }
 
-    return Array.from<LeIf>(
-      this.parentElement.querySelectorAll(this.siblingType)
-    );
+    const qualifiedSiblings = this.parentElement.querySelectorAll<HTMLElement>(Object.keys(this.relevantSiblingHandlers).join(","));
+
+    if (qualifiedSiblings?.length > 0) {
+      returnValue = Array.from(qualifiedSiblings);
+    }
+    
+    return returnValue;
+  }
+
+  onDisconnected() {
+    this.parentElement?.removeEventListener("le-updated", this.handleUpdates);
   }
 
   onParsed() {
-    // Determine sibling type/*  */
-    for (const type of this.validSiblings) {
-      const siblings = this.parentElement?.querySelectorAll(type);
+    // Attach an event listener to the parent to observe for updating children
+    this.parentElement?.addEventListener("le-updated", this.handleUpdates.bind(this));
+  }
 
-      if (siblings instanceof NodeList && siblings.length > 0) {
-        this.siblingType = type;
+  // TO-DO: Make sure this runs when a relevant sibling calls their updatedCallback() method
+  onUpdated() {
+    console.log("Updating le-else!");
+    
+    let shouldHide = false;
+    const relevantSiblings = this.relevantSiblings;
+    
+    for (const sibling of relevantSiblings) {
+      const siblingChecker = this.relevantSiblingHandlers[sibling.tagName.toLowerCase()];
+      
+      // Check the sibling
+      if (typeof siblingChecker === "function") {
+        shouldHide = siblingChecker(sibling);
+      }
+      
+      if (shouldHide) {
+        // One sibling has returned their visibility status as true, so we can exit the loop
+        break;
+      }
+    }
+
+    // Check to see if siblings are being shown
+    if (shouldHide) {
+      this.hideContent();
+    } else {
+      this.showContent();
+    }
+  }
+
+  handleUpdates(event: Event) {
+    const relevantSiblings = this.relevantSiblings;
+    
+    for (const sibling of relevantSiblings) {
+      if (event.target === sibling) {
+        this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
         break;
       }
     }
   }
 
-  onUpdated() {
-    let shouldShow = false;
-    // Check to see if siblings are being shown
-    switch (this.siblingType) {
-      case "le-each":
-        break;
-      case "le-if":
-        shouldShow = this.relevantSiblings.every((sibling) => {
-          return !sibling.condition;
-        });
-        break;
-      default:
-        break;
+  checkLeEach(element: RelevantSiblingElements) {
+    if (!(element instanceof LeEach)) {
+      return false;
     }
 
-    if (shouldShow) {
-      this.showContent();
-    } else {
-      this.hideContent();
+    return !element.isEmpty;
+  }
+
+  checkLeIf(element: RelevantSiblingElements) {
+    if (!(element instanceof LeIf)) {
+      return false;
     }
+
+    return element.condition
   }
 
   hideContent() {
