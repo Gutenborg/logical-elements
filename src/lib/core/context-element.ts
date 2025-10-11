@@ -1,7 +1,11 @@
 import LogicalElement from "./logical-element";
 import { ReactiveState } from "./reactive-state";
 import { HTMLAttributeValue } from "./shared-types";
-import { handleAttributes, handleListeners, handleProperties } from "./reactive-handlers";
+import {
+  handleAttributes,
+  handleListeners,
+  handleProperties,
+} from "./reactive-handlers";
 
 interface ContextElement {
   onStateUpdated?(property: string, previousValue: any, newValue: any): void;

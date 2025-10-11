@@ -1,4 +1,6 @@
-import LogicalElement, { LogicalElementReactiveNamespaceMatch } from "../../core/logical-element";
+import LogicalElement, {
+  LogicalElementReactiveNamespaceMatch,
+} from "../../core/logical-element";
 
 type Iterable = Array<any>;
 
@@ -16,26 +18,25 @@ class LeEach extends LogicalElement {
     return true;
   }
 
-  get list (): Iterable {
+  get list(): Iterable {
     const attributeValue = this.getAttribute("list");
     const stateValue = this.getStateValue(attributeValue);
 
     if (!this.isIterable(stateValue)) {
       return [];
-    }
-
-    else return stateValue;
+    } else return stateValue;
   }
 
   onConnected() {
     this.reactiveNamespaces.set("each", this.updateReactiveEach);
   }
 
-  onUpdated() {
-    
-  }
+  onUpdated() {}
 
-  updateReactiveEach(element: HTMLElement, matches: LogicalElementReactiveNamespaceMatch[]) {
+  updateReactiveEach(
+    element: HTMLElement,
+    matches: LogicalElementReactiveNamespaceMatch[]
+  ) {
     console.log(element, matches);
 
     const template = this.template;

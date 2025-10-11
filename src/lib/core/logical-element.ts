@@ -67,7 +67,7 @@ type LogicalElementReactiveNamespaces = Map<
 export type LogicalElementReactiveHandler = (
   element: HTMLElement,
   matches: LogicalElementReactiveNamespaceMatch[],
-  instance?: LogicalElement
+  instance: LogicalElement
 ) => void;
 
 export interface LogicalElementReactiveNamespaceMatch {
