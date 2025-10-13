@@ -24,11 +24,12 @@ interface LogicalElement extends HTMLElement {
     previousValue: HTMLAttributeValue,
     newValue: HTMLAttributeValue
   ): void;
+  onBeforeUpdated?(): void;
   onChildrenModified(records: MutationRecord[]): void;
   onConnected?(): void;
   onDisconnected?(): void;
   onParsed?(): void;
-  onProviderUpdated?(property: string, previousValue: any, newValue: any): void;
+  onProviderUpdated?(provider: string, property: string, previousValue: any, newValue: any): void;
   /** Called when either an `attribute-changed`, `children-modified`, or `parsed` event occur. This callback
    * is debounced and will only trigger once even if multiple updates occur. */
   onUpdated?(): void;
@@ -158,6 +159,7 @@ class LogicalElement extends HTMLElement {
         const subscriptionId = stateProvider?.subscribe(
           (property, propertyPreviousValue, propertyNewValue) => {
             this.providerUpdatedCallback(
+              stateProvider.name,
               property,
               propertyPreviousValue,
               propertyNewValue
@@ -383,13 +385,13 @@ class LogicalElement extends HTMLElement {
     composed: false,
   };
 
-  providerUpdatedCallback(property: string, previousValue: any, newValue: any) {
+  providerUpdatedCallback(provider: string, property: string, previousValue: any, newValue: any) {
     if (!this.disableProviderUpdates) {
       this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
     }
 
     if (typeof this.onProviderUpdated === "function") {
-      this.onProviderUpdated(property, previousValue, newValue);
+      this.onProviderUpdated(provider, property, previousValue, newValue);
     }
 
     // Perform component consumer logic
@@ -397,6 +399,7 @@ class LogicalElement extends HTMLElement {
       new CustomEvent("le-provider-updated", {
         ...this.updatedEventOptions,
         detail: {
+          provider,
           property,
           previousValue,
           newValue,
@@ -419,6 +422,10 @@ class LogicalElement extends HTMLElement {
   };
 
   updatedCallback() {
+    if (typeof this.onBeforeUpdated === "function") {
+      this.onBeforeUpdated();
+    }
+
     // Component is ready for reactivity
     if (!this.isInitialized) {
       this.isInitialized = true;
@@ -490,7 +497,11 @@ class LogicalElement extends HTMLElement {
     return this.stateProviders[name]?.lookupValue(path);
   }
 
-  handleReactiveNamespaces(rootNode: Node = this) {
+  handleReactiveNamespaces() {
+    if (!this.isParsed || !this.isInitialized) {
+      return;
+    }
+
     let matchMap = new Map<
       LogicalElementReactiveHandler,
       LogicalElementReactiveMatch[]
@@ -529,7 +540,6 @@ class LogicalElement extends HTMLElement {
 
           if (matchMap.has(handler) && Array.isArray(matchMap.get(handler))) {
             const currentMatches = matchMap.get(handler)!;
-
             matchMap.set(handler, currentMatches.concat(mappedMatches));
           } else {
             matchMap.set(handler, mappedMatches);

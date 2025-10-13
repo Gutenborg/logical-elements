@@ -17,15 +17,22 @@ export class ReactiveState {
       return { name: "", path: "" };
     }
 
+    
     const splitPath = fullPath.slice(1, fullPath.length - 1).split(".");
     const name = splitPath.shift() ?? "";
-    const path = splitPath.join();
+    const path = splitPath.join(".");
 
     return { name, path };
   }
 
   private _store: StateStore = this._createProxy({});
   private _subscribers: Record<number, ReactiveCallback> = {};
+
+  public name: string;
+
+  constructor(name: string) {
+    this.name = name;
+  }
 
   public get store () {
     return this._store;

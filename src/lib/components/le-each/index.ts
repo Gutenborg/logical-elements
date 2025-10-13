@@ -1,16 +1,13 @@
-import LogicalElement, {
-  LogicalElementReactiveMatch,
-} from "../../core/logical-element";
-import {
-  handleAttributes,
-  handleListeners,
-  handleProperties,
-} from "../../core/reactive-handlers";
+import LogicalElement from "../../core/logical-element";
 
 type IterableList = Array<any>;
 
 /** Can be provided a list and for each item in the list will iterate over a template. */
 class LeEach extends LogicalElement {
+  static observedAttributes = ["as", "list"];
+
+  renderedItemCount = 0;
+  
   get template() {
     return this.querySelector<HTMLTemplateElement>("template");
   }
@@ -27,26 +24,31 @@ class LeEach extends LogicalElement {
     const attributeValue = this.getAttribute("list");
     const stateValue = this.getStateValue(attributeValue);
 
-    if (!this.isIterable(stateValue)) {
+    if (!Array.isArray(stateValue)) {
       return [];
     }
 
     return stateValue;
   }
-
-  onConnected() {
-    // Create the "each" namespace for attributes
-    this.reactiveNamespaces.set("each", this.updateReactiveEach);
+  
+  onParsed() {
+    this.renderEach();
+  }
+  
+  onProviderUpdated() {
+    if (this.renderedItemCount !== this.list.length) {
+      this.renderEach();
+    }
   }
 
-  onUpdated() {}
-
-  updateReactiveEach(matches: LogicalElementReactiveMatch[]) {
+  renderEach() {
     const list = this.list;
     const template = this.template;
     const variableName = this.getAttribute("as");
+    const container = this.querySelector("[data-apply-template]");
 
     if (
+      container === null ||
       list.length === 0 ||
       !(template instanceof HTMLTemplateElement) ||
       typeof variableName !== "string"
@@ -55,41 +57,28 @@ class LeEach extends LogicalElement {
       return;
     }
 
-    for (const match of matches) {
-      // Remove any previously rendered children from the element
-      match.element.childNodes.forEach((childNode) => childNode.remove());
+    const fragment = document.createDocumentFragment();
 
-      // Render the template
-      for (const item of list) {
-        console.log("Rendering template for item in the list: ", item);
-        const renderedTemplate = this.renderTemplate(item, template);
+    Array.from(container.childNodes).forEach((childNode) => childNode.remove());
 
-        match.element.appendChild(renderedTemplate);
-      }
+    // Render the template
+    for (const key of list.keys()) {
+      const clone = document.importNode(template.content, true);
+
+      this.eachChild((currentChild) => {
+        for(const attribute of currentChild.attributes) {
+          if (attribute.value === `{${variableName}}`) {
+            const listPath = this.getAttribute("list")!.slice(1, -1);
+            attribute.value = `{${listPath}.${key}}`;
+          }
+        }
+      }, clone);
+
+      fragment.appendChild(clone);
     }
-  }
 
-  isIterable(value: any) {
-    if (Array.isArray(value) || (typeof value === "object" && value !== null)) {
-      return true;
-    }
-
-    return false;
-  }
-
-  renderTemplate(item: any, template: HTMLTemplateElement) {
-    const clone = document.importNode(template.content, true);
-
-    // console.log(item);
-
-    // Apply each value to the template and append it as a child of the container
-    /* const assignments = clone.querySelectorAll("[data-assign]");
-
-    assignments.forEach((element) => {
-      element.textContent = item;
-    }); */
-
-    return clone;
+    this.renderedItemCount = list.length;
+    container.appendChild(fragment);
   }
 }
 

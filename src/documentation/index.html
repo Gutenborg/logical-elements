@@ -64,17 +64,18 @@
           </le-if>
 
           <le-if condition="{anotherTestContext.test}">
-            <p>Another le-if test</p>
+            <p set:text="{testContext.favoriteFruits.1}">Another le-if test</p>
           </le-if>
 
           <le-each list="{testContext.favoriteFruits}" as="fruit">
             <template>
-              <li set:text="{fruit}">
+              <li>
+                <p set:text="{fruit}"></p>
                 <button set:text="{testContext.buttonLabel}"></button>
               </li>
             </template>
 
-            <ul each:apply-template></ul>
+            <ul data-apply-template></ul>
           </le-each>
 
           <le-else>
