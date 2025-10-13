@@ -1,7 +1,4 @@
-import LogicalElement, {
-  LogicalElementEventMap,
-  LogicalElementReactiveNamespaceMatch,
-} from "./logical-element";
+import LogicalElement, { LogicalElementReactiveMatch } from "./logical-element";
 import { ReactiveState } from "./reactive-state";
 import { HTMLAttributeValue } from "./shared-types";
 
@@ -18,8 +15,7 @@ export function convertToAttribute(value: any): HTMLAttributeValue {
 }
 
 export function handleAttributes(
-  element: HTMLElement,
-  matches: LogicalElementReactiveNamespaceMatch[],
+  matches: LogicalElementReactiveMatch[],
   instance: LogicalElement
 ) {
   for (const match of matches) {
@@ -37,82 +33,50 @@ export function handleAttributes(
       case "false":
       case null:
       case "null":
-        element.removeAttribute(match.localName);
+        match.element.removeAttribute(match.localName);
         break;
       default:
-        element.setAttribute(match.localName, convertedValue);
+        match.element.setAttribute(match.localName, convertedValue);
         break;
     }
   }
 }
 
-interface LogicalElementManagedHandlers {
-  callback: EventListenerOrEventListenerObject;
-  eventType: keyof ElementEventMap | keyof LogicalElementEventMap | string;
-}
-
 export function handleListeners(
-  element: HTMLElement,
-  matches: LogicalElementReactiveNamespaceMatch[],
+  matches: LogicalElementReactiveMatch[],
   instance: LogicalElement
 ) {
   // Extend the instance to include a new property
   const extendedInstance = instance as LogicalElement & {
-    managedListeners: WeakMap<HTMLElement, LogicalElementManagedHandlers[]>;
+    eventController: AbortController;
   };
 
-  if (!(extendedInstance.managedListeners instanceof WeakMap)) {
-    extendedInstance.managedListeners = new WeakMap();
+  if (extendedInstance.eventController instanceof AbortController) {
+    extendedInstance.eventController.abort();
   }
 
-  // Compare the matches to the list of current handlers to determine if we need to remove any
-  const elementHandlers = extendedInstance.managedListeners.get(element) ?? [];
-  const assignedHandlers: LogicalElementManagedHandlers[] = [];
+  extendedInstance.eventController = new AbortController();
 
   for (const match of matches) {
     if (!match.value || !ReactiveState.isStateValue(match.value)) {
       // Value is not a context value and we cannot lookup the function to use as a handler
-      console.warn(
-        "Expected a state derived value, but instead received: ",
-        match.value
-      );
-      return;
+      continue;
     }
 
+    // Compare the match to the list of current handlers to determine if we need to remove any
     const handler = instance.getStateValue(match.value);
 
-    if (
-      typeof handler === "function" &&
-      !elementHandlers.some((h) => h === handler)
-    ) {
-      // Add event listener
-      element.addEventListener(match.localName, handler);
-    }
-
-    // Record that this handler was assigned
-    assignedHandlers.push({ eventType: match.localName, callback: handler });
-  }
-
-  // Compare assigned handlers to current handlers and remove any abandoned handlers
-  for (const handler of elementHandlers) {
-    if (
-      !assignedHandlers.some(
-        (h) =>
-          h.callback === handler.callback && h.eventType === handler.eventType
-      )
-    ) {
-      // Handle has been abandoned and should be removed
-      element.removeEventListener(handler.eventType, handler.callback);
+    if (typeof handler === "function") {
+      // Listener has not been added and needs to be
+      match.element.addEventListener(match.localName, handler, {
+        signal: extendedInstance.eventController.signal,
+      });
     }
   }
-
-  // Update the list of managed handlers
-  extendedInstance.managedListeners.set(element, assignedHandlers);
 }
 
 export function handleProperties(
-  element: HTMLElement,
-  matches: LogicalElementReactiveNamespaceMatch[],
+  matches: LogicalElementReactiveMatch[],
   instance: LogicalElement
 ) {
   for (const match of matches) {
@@ -125,7 +89,7 @@ export function handleProperties(
 
     switch (match.localName) {
       case "text":
-        element.textContent = matchValue;
+        match.element.textContent = matchValue;
         break;
       // case "template":
       // case "popover":

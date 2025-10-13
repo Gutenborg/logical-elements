@@ -1,5 +1,6 @@
 import LogicalElement from "../../core/logical-element";
 
+/** Has a condition attribute that can be true or false. If true, the element is shown, otherwise it is hidden. */
 class LeIf extends LogicalElement {
   static observedAttributes = ["condition"];
 

@@ -69,7 +69,9 @@
 
           <le-each list="{testContext.favoriteFruits}" as="fruit">
             <template>
-              <li set:text="{testContext.buttonLabel}"></li>
+              <li set:text="{fruit}">
+                <button set:text="{testContext.buttonLabel}"></button>
+              </li>
             </template>
 
             <ul each:apply-template></ul>

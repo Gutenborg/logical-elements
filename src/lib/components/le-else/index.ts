@@ -5,28 +5,36 @@ import LeIf from "../le-if";
 type RelevantSiblingTypes = "le-if" | "le-each" | string;
 type RelevantSiblingElements = LeIf | LeEach | HTMLElement;
 type RelevantSiblingIsShown = (sibling: RelevantSiblingElements) => boolean;
-type RelevantSiblings = Record<RelevantSiblingTypes | string, RelevantSiblingIsShown>;
+type RelevantSiblings = Record<
+  RelevantSiblingTypes | string,
+  RelevantSiblingIsShown
+>;
 
+/** Determines relevant siblings to watch and check for a condition. If all relevant siblings return
+ * their condition as false, this element is shown. Otherwise it is hidden.
+ *
+ * TO-DO: Make sure the element is watching the siblings directly instead of relying on an updated event from the parent*/
 class LeElse extends LogicalElement {
   public relevantSiblingHandlers: RelevantSiblings = {
     "le-each": this.checkLeEach,
     "le-if": this.checkLeIf,
   };
 
-
   get relevantSiblings() {
     let returnValue: HTMLElement[] = [];
-    
+
     if (!(this.parentElement instanceof HTMLElement)) {
       return returnValue;
     }
 
-    const qualifiedSiblings = this.parentElement.querySelectorAll<HTMLElement>(Object.keys(this.relevantSiblingHandlers).join(","));
+    const qualifiedSiblings = this.parentElement.querySelectorAll<HTMLElement>(
+      Object.keys(this.relevantSiblingHandlers).join(",")
+    );
 
     if (qualifiedSiblings?.length > 0) {
       returnValue = Array.from(qualifiedSiblings);
     }
-    
+
     return returnValue;
   }
 
@@ -36,22 +44,26 @@ class LeElse extends LogicalElement {
 
   onParsed() {
     // Attach an event listener to the parent to observe for updating children
-    this.parentElement?.addEventListener("le-updated", this.handleUpdates.bind(this));
+    this.parentElement?.addEventListener(
+      "le-updated",
+      this.handleUpdates.bind(this)
+    );
   }
 
   // TO-DO: Make sure this runs when a relevant sibling calls their updatedCallback() method
   onUpdated() {
     let shouldHide = false;
     const relevantSiblings = this.relevantSiblings;
-    
+
     for (const sibling of relevantSiblings) {
-      const siblingChecker = this.relevantSiblingHandlers[sibling.tagName.toLowerCase()];
-      
+      const siblingChecker =
+        this.relevantSiblingHandlers[sibling.tagName.toLowerCase()];
+
       // Check the sibling
       if (typeof siblingChecker === "function") {
         shouldHide = siblingChecker(sibling);
       }
-      
+
       if (shouldHide) {
         // One sibling has returned their visibility status as true, so we can exit the loop
         break;
@@ -68,7 +80,7 @@ class LeElse extends LogicalElement {
 
   handleUpdates(event: Event) {
     const relevantSiblings = this.relevantSiblings;
-    
+
     for (const sibling of relevantSiblings) {
       if (event.target === sibling) {
         this.updateScheduler.scheduleUpdate(this.updatedCallback.bind(this));
@@ -90,7 +102,7 @@ class LeElse extends LogicalElement {
       return false;
     }
 
-    return element.condition
+    return element.condition;
   }
 
   hideContent() {

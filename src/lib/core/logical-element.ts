@@ -65,12 +65,17 @@ type LogicalElementReactiveNamespaces = Map<
 >;
 
 export type LogicalElementReactiveHandler = (
-  element: HTMLElement,
-  matches: LogicalElementReactiveNamespaceMatch[],
+  matches: LogicalElementReactiveMatch[],
   instance: LogicalElement
 ) => void;
 
-export interface LogicalElementReactiveNamespaceMatch {
+export type EachChildCallback = (
+  currentChild: HTMLElement,
+  treewalker: TreeWalker
+) => Node | null | void;
+
+export interface LogicalElementReactiveMatch {
+  element: HTMLElement;
   name: string;
   localName: string;
   value: HTMLAttributeValue;
@@ -435,6 +440,30 @@ class LogicalElement extends HTMLElement {
   }
 
   // MARK: Utility Methods
+  eachChild(callback: EachChildCallback, node: Node = this) {
+    if (typeof callback !== "function") {
+      // No action to take
+      return;
+    }
+
+    // Create a treewalker to step through child nodes and find reactive children
+    const treewalker = document.createTreeWalker(node, NodeFilter.SHOW_ELEMENT);
+    let currentNode = treewalker.nextNode();
+
+    // Loop through the children
+    while (currentNode) {
+      const currentElement = currentNode as HTMLElement;
+
+      const nextNode = callback(currentElement, treewalker);
+
+      if (nextNode === undefined) {
+        currentNode = treewalker.nextNode();
+      } else {
+        currentNode = nextNode;
+      }
+    }
+  }
+
   getAttributeFromState(attributeName: string) {
     const attributeValue = super.getAttribute(attributeName);
 
@@ -461,50 +490,56 @@ class LogicalElement extends HTMLElement {
     return this.stateProviders[name]?.lookupValue(path);
   }
 
-  handleReactiveNamespaces() {
-    if (!this.isParsed || this.reactiveNamespaces.size <= 0) {
-      // Element is not ready for reactivity
-      return;
-    }
+  handleReactiveNamespaces(rootNode: Node = this) {
+    let matchMap = new Map<
+      LogicalElementReactiveHandler,
+      LogicalElementReactiveMatch[]
+    >();
 
-    // Create a treewalker to step through child nodes and find reactive children
-    const treewalker = document.createTreeWalker(this, NodeFilter.SHOW_ELEMENT);
-    let currentNode = treewalker.nextNode();
-
-    // Loop through the children
-    while (currentNode) {
-      const element = currentNode as HTMLElement;
-
-      if (element instanceof ContextElement) {
-        // CurrentNode is a context element, tell it to handle updating its own children and skip it
+    this.eachChild((currentElement, treewalker) => {
+      if (currentElement instanceof ContextElement) {
+        // CurrentNode is a context element, tell it to handle updating its own children and then skip over it
         // This is needed because the current context may not contain values required by children of another context
-        element.handleReactiveNamespaces();
-        currentNode = treewalker.nextSibling();
-      } else {
-        // Navigate to the next node
-        currentNode = treewalker.nextNode();
+        currentElement.handleReactiveNamespaces();
+        return treewalker.nextSibling();
       }
 
-      // Get attributes from element and look for our defined reactive attributes
       for (const [namespace, handler] of this.reactiveNamespaces) {
-        const matches = element
+        if (typeof handler !== "function") {
+          // Nothing to pass matches to
+          continue;
+        }
+
+        const matches = currentElement
           .getAttributeNames()
           .filter((attribute) => attribute.startsWith(`${namespace}:`));
 
+        // Get attributes from element and look for our defined reactive attributes
         if (matches.length > 0) {
-          const mappedMatches = matches.map((match) => {
-            return {
-              name: match,
-              localName: match.split(":")[1],
-              value: element.getAttribute(match),
-            };
-          });
+          const mappedMatches: LogicalElementReactiveMatch[] = matches.map(
+            (match) => {
+              return {
+                element: currentElement,
+                name: match,
+                localName: match.split(":")[1],
+                value: currentElement.getAttribute(match),
+              };
+            }
+          );
 
-          if (typeof handler === "function") {
-            handler.call(this, element, mappedMatches, this);
+          if (matchMap.has(handler) && Array.isArray(matchMap.get(handler))) {
+            const currentMatches = matchMap.get(handler)!;
+
+            matchMap.set(handler, currentMatches.concat(mappedMatches));
+          } else {
+            matchMap.set(handler, mappedMatches);
           }
         }
       }
+    });
+
+    for (const [handler, matches] of matchMap) {
+      handler.call(this, matches, this);
     }
   }
 }
