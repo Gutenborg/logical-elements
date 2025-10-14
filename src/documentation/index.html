@@ -71,7 +71,10 @@
             <template>
               <li>
                 <p set:text="{fruit}"></p>
-                <button set:text="{testContext.buttonLabel}"></button>
+                <button
+                  on:click="{testContext.handleClick}"
+                  set:text="{testContext.buttonLabel}"
+                ></button>
               </li>
             </template>
 
