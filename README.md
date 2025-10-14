@@ -43,3 +43,28 @@ It extends the LogicalElement class and adds a reactive state to it to become a 
 - State Updated Callback - Fires when the state of this ContextElement instance updates.
 
 ### Reactive Attribute Namespaces
+One of the main primary functionalities is the ability to declare attribute namespaces that will be evaluated if there is a provider update anywhere above them. Take for example the `attr` namespace. You can use this to assign any value to another attribute on the same element like this:
+
+```html
+<le-context name="exampleContext">
+    <script>
+        function exampleContext (state) {
+            return {
+                isDisabled: true,
+            }
+        }
+    </script>
+
+    <button attr:disabled="{exampleContext.isDisabled}">This button is disabled</button>
+</le-context>
+```
+
+The `attr` namespace gets broken down in this way: 'attr:ATTRIBUTE_NAME="{PROVIDER_NAME.PROPERTY_NAME}"'. It will look up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.
+
+There are three provided reactive namespaces that are assigned by default to the ContextElement class:
+
+- `attr` - Assign values to attributes on the same element
+- `on` - Add event listeners to the element for the specified event
+- `set` - Assign values to specific properties such as `textContent`
+
+Any author of a LogicalElement can add their own reactive namespaces to be processed during the `updatedCallback` lifecycle.
