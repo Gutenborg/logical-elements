@@ -6,9 +6,7 @@ import ContextElement from "../../core/context-element";
 class LeContext extends ContextElement {
   onParsed() {
     // Check for a context script element
-    const contextScript = this.querySelector<HTMLScriptElement>(
-      "script[data-context]"
-    );
+    const contextScript = this.querySelector<HTMLScriptElement>("script");
 
     const name = this.getAttribute("name");
 

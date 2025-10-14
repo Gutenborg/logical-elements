@@ -4,10 +4,10 @@ import LeIf from "../le-if";
 
 type RelevantSiblingTypes = "le-if" | "le-each" | string;
 type RelevantSiblingElements = LeIf | LeEach | HTMLElement;
-type RelevantSiblingIsShown = (sibling: RelevantSiblingElements) => boolean;
-type RelevantSiblings = Record<
+type RelevantSiblingHandler = (sibling: RelevantSiblingElements) => boolean;
+type RelevantSiblingHandlers = Map<
   RelevantSiblingTypes | string,
-  RelevantSiblingIsShown
+  RelevantSiblingHandler
 >;
 
 /** Determines relevant siblings to watch and check for a condition. If all relevant siblings return
@@ -15,10 +15,10 @@ type RelevantSiblings = Record<
  *
  * TO-DO: Make sure the element is watching the siblings directly instead of relying on an updated event from the parent*/
 class LeElse extends LogicalElement {
-  public relevantSiblingHandlers: RelevantSiblings = {
-    "le-each": this.checkLeEach,
-    "le-if": this.checkLeIf,
-  };
+  public relevantSiblingHandlers: RelevantSiblingHandlers = new Map([
+    ["le-each", this.checkLeEach],
+    ["le-if", this.checkLeIf]
+  ]);
 
   get relevantSiblings() {
     let returnValue: HTMLElement[] = [];
@@ -28,7 +28,7 @@ class LeElse extends LogicalElement {
     }
 
     const qualifiedSiblings = this.parentElement.querySelectorAll<HTMLElement>(
-      Object.keys(this.relevantSiblingHandlers).join(",")
+      Array.from(this.relevantSiblingHandlers.keys()).join(",")
     );
 
     if (qualifiedSiblings?.length > 0) {
@@ -52,26 +52,23 @@ class LeElse extends LogicalElement {
 
   // TO-DO: Make sure this runs when a relevant sibling calls their updatedCallback() method
   onUpdated() {
-    let shouldHide = false;
+    let siblingStatus = false;
     const relevantSiblings = this.relevantSiblings;
 
     for (const sibling of relevantSiblings) {
       const siblingChecker =
-        this.relevantSiblingHandlers[sibling.tagName.toLowerCase()];
+        this.relevantSiblingHandlers.get(sibling.tagName.toLowerCase());
 
       // Check the sibling
-      if (typeof siblingChecker === "function") {
-        shouldHide = siblingChecker(sibling);
-      }
-
-      if (shouldHide) {
+      if (typeof siblingChecker === "function" && siblingChecker(sibling)) {
         // One sibling has returned their visibility status as true, so we can exit the loop
+        siblingStatus = true;
         break;
       }
     }
 
     // Check to see if siblings are being shown
-    if (shouldHide) {
+    if (siblingStatus) {
       this.hideContent();
     } else {
       this.showContent();

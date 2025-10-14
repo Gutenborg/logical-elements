@@ -1,93 +1,331 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
 
-    <style>
-      :not(:defined) {
-        display: none;
-      }
-    </style>
-  </head>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vite + TS</title>
 
-  <body>
-    <div id="app">
-      <le-context name="anotherTestContext">
-        <script>
-          function anotherTestContext(state) {
-            const handleToggle = () => {
-              state.store.test = !state.store.test;
-            };
+  <style>
+    :not(:defined) {
+      display: none;
+    }
+  </style>
+</head>
 
-            return { handleToggle, test: true };
-          }
-        </script>
+<body>
+  <h1>Logical Elements</h1>
 
-        <le-context name="testContext">
-          <script data-context>
-            function testContext(state) {
-              const handleClick = (event) => {
-                state.store.count++;
-              };
+  <p>A set of tools for creating logical HTML.</p>
 
-              return {
-                count: 0,
-                buttonLabel: state.derive((store) =>
-                  store.count < 5
-                    ? `Count is low: ${store.count}`
-                    : `Count is high: ${store.count}`
-                ),
-                handleClick,
-                isDisabled: state.derive((store) => store.count > 10),
-                favoriteFruits: ["Apple", "Banana", "Peach", "Raspberry"],
-              };
+  <h2>A Logical Approach</h2>
+
+  <p>Most JavaScript frameworks are trying to solve a problem with HTML which is its lack of logic-based functionality
+    and focus on adding features that lets you merge features of JavaScript with HTML. They typically do this by
+    bringing the HTML into the JavaScript domain and controlling the DOM sometimes through a virtual DOM and sometimes
+    through a compiler that provides a JS-like experience which handles doing the tedious task of connecting JS and
+    HTML. Each of these tools, React, Vue, Svelte, Ember, etc. requires that the code you write be transformed before a
+    browser can read it.</p>
+
+  <p>Logical Elements is an attempt to provide framework-level reactivity and functionality without a build step. It
+    allows you to write HTML that can talk directly to nearby JavaScript, reference deeply nested values, update when
+    values change, and iterate over arrays and objects. In short, it provides elements that have logical functionality.
+  </p>
+
+  <h2>Core Approach</h2>
+
+  <p>The main way that this is achieved is through the use of a few combined browser tools such as:</p>
+
+  <ul>
+    <li>Custom Elements</li>
+    <li>Mutation Observers</li>
+    <li>Object Proxies</li>
+    <li>Treewalkers</li>
+    <li>Custom Events</li>
+    <li>And more!</li>
+  </ul>
+
+  <p>The elements provided serve as both an authoring tool and as useful ways of providing basic logic in your HtML such
+    as
+    if and else statements and each loops.</p>
+
+  <h3>The LogicalElement Class</h3>
+
+  <p>The first tool is an enhanced HTMLElement class to use when authoring your own custom elements. It features the
+    following enhancements:</p>
+
+  <ul>
+
+    <li>Parsed Callback - Fires when the element has been fully parsed with all of its children. This solves an issue
+      with the Custom Element `connectedCallback` which triggers on the opening tag of an element and doesn't know
+      anything
+      about its children.</li>
+    <li>Updated Callback - Fires when a parsed, attributeChanged, childrenModified, or providerUpdated callback is also
+      fired. Will batch any of those events together if they occur at the same time.</li>
+    <li>Children Modified Callback - Fires when the tree structure of the children changes.</li>
+    <li>Provider Updated Callback - Fires when any parent state provider updates their state.</li>
+    <li>Provider Subscriptions - Automatically subscribes to parent state providers and makes them available to the
+      element.</li>
+    <li>Update Scheduler - Helps batch updates together to minimize the number of times an element runs its update logic
+    </li>
+    <li>Reactive Attribute Namespaces - The ability to define reactive attributes and how to handle them. A reactive
+      attribute will have a handler called on it on every update.</li>
+    <li>Each Child Walker - A treewalker that steps through each child of an element and fires a callback function on
+      them.</li>
+    <li>Lookup State Values - Lookup values from a parent state provider.</li>
+  </ul>
+
+  <h3>The ContextElement Class</h3>
+
+  <p>It extends the LogicalElement class and adds a reactive state to it to become a state provider.</p>
+
+  <ul>
+    <li>Reactive State - Uses JavaScript object proxies to capture update events and notify subscribers. Will trigger
+      the
+      `stateUpdated`, `providerUpdated`, and `updated` callbacks.</li>
+    <li>State Updated Callback - Fires when the state of this ContextElement instance updates.</li>
+  </ul>
+
+  <h3>Reactive Attribute Namespaces</h3>
+  <p>One of the main primary functionalities is the ability to declare attribute namespaces that will be evaluated if
+    there
+    is a provider update anywhere above them. Take for example the `attr` namespace. You can use this to assign any
+    value
+    to another attribute on the same element.</p>
+
+  <p>The `attr` namespace gets broken down in this way: 'attr:ATTRIBUTE_NAME="{PROVIDER_NAME.PROPERTY_NAME}"'. It will
+    look
+    up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.</p>
+
+  <p>There are three provided reactive namespaces that are assigned by default to the ContextElement class:</p>
+
+  <ul>
+    <li>`attr` - Assign values to attributes on the same element</li>
+    <li>`on` - Add event listeners to the element for the specified event</li>
+    <li>`set` - Assign values to specific properties such as `textContent`</li>
+  </ul>
+
+  <p>Any author of a LogicalElement can add their own reactive namespaces to be processed during the `updatedCallback`
+    lifecycle.</p>
+
+  <h2>Base Components</h2>
+
+  <h3>Le-Context</h3>
+
+  <p>Allows the user to create a reactive state that can be consumed by its children.</p>
+
+  <le-context name="leContextExample">
+    <script>
+      function leContextExample(state) {
+        const incrementCount = (event) => {
+          state.store.count++;
+        };
+
+        const decrementCount = (store) => {
+          state.store.count--;
+        };
+
+        return {
+          count: 0,
+          decrementCount,
+          incrementCount,
+          countAlert: state.derive((store) => {
+            if (store.count < -5) {
+              return "Really Low"
+            } else if (store.count < 0) {
+              return "Low"
+            } else if (store.count === 0) {
+              return "Neutral"
+            } else if (store.count > 0 && store.count < 5) {
+              return "High"
+            } else if (store.count >= 5) {
+              return "Really High"
             }
-          </script>
+          })
+        }
+      }
+    </script>
 
-          <button
-            attr:disabled="{testContext.isDisabled}"
-            set:text="{testContext.buttonLabel}"
-            on:click="{testContext.handleClick}"
-          >
-            Testing
-          </button>
+    <p>
+      <button on:click="{leContextExample.decrementCount}" title="Decrease Count">-</button>
+      <span>Count is: <span set:text="{leContextExample.count}"></span> Which is <span
+          set:text="{leContextExample.countAlert}"></span></span>
+      <button on:click="{leContextExample.incrementCount}" title="Increase Count">+</button>
+    </p>
+  </le-context>
 
-          <button on:click="{anotherTestContext.handleToggle}">
-            Toggle AnotherTestContext
-          </button>
+  <h3>Le-If</h3>
 
-          <le-if condition="{testContext.isDisabled}">
-            <button>Another Button</button>
-          </le-if>
+  <p>Allows the user to conditionally render children.</p>
 
-          <le-if condition="{anotherTestContext.test}">
-            <p set:text="{testContext.favoriteFruits.1}">Another le-if test</p>
-          </le-if>
+  <le-context name="leIfExample">
+    <script>
+      function leIfExample(state) {
+        const setActiveTab = (event) => {
+          state.store.activeTab = event.target.dataset.tab;
+        };
 
-          <le-each list="{testContext.favoriteFruits}" as="fruit">
-            <template>
-              <li>
-                <p set:text="{fruit}"></p>
-                <button
-                  on:click="{testContext.handleClick}"
-                  set:text="{testContext.buttonLabel}"
-                ></button>
-              </li>
-            </template>
+        // TO-DO: Make the if element more flexible and not require preset comparisons to function
+        return {
+          activeTab: "1",
+          setActiveTab,
+          isTab1Active: state.derive((store) => store.activeTab === "1"),
+          isTab2Active: state.derive((store) => store.activeTab === "2"),
+          isTab3Active: state.derive((store) => store.activeTab === "3"),
+          isTab4Active: state.derive((store) => store.activeTab === "4"),
+        }
+      }
+    </script>
 
-            <ul data-apply-template></ul>
-          </le-each>
+    <button data-tab="1" on:click="{leIfExample.setActiveTab}">
+      Tab 1
+    </button>
 
-          <le-else>
-            <p>An le-else test</p>
-          </le-else>
-        </le-context>
-      </le-context>
-    </div>
+    <button data-tab="2" on:click="{leIfExample.setActiveTab}">
+      Tab 2
+    </button>
 
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    <button data-tab="3" on:click="{leIfExample.setActiveTab}">
+      Tab 3
+    </button>
+
+    <button data-tab="4" on:click="{leIfExample.setActiveTab}">
+      Tab 4
+    </button>
+
+    <le-if condition="{leIfExample.isTab1Active}">
+      <p>Tab 1 is Active!</p>
+    </le-if>
+
+    <le-if condition="{leIfExample.isTab2Active}">
+      <p>Tab 2 is Active!</p>
+    </le-if>
+
+    <le-if condition="{leIfExample.isTab3Active}">
+      <p>Tab 3 is Active!</p>
+    </le-if>
+
+    <le-if condition="{leIfExample.isTab4Active}">
+      <p>Tab 4 is Active!</p>
+    </le-if>
+  </le-context>
+
+  <h3>Le-Else</h3>
+
+  <p>Looks at sibling elements using validator functions to check if it needs to be shown. If any sibling validator
+    returns true, it is hidden. Authors can define their own validator functions.</p>
+
+  <le-context name="leElseExample">
+    <script>
+      function leElseExample(state) {
+        const toggleBoolean = (event) => {
+          const booleanIndex = event.target.dataset.booleanId;
+
+          state.store[`boolean${booleanIndex}`] = !state.store[`boolean${booleanIndex}`];
+        };
+
+        // TO-DO: Make the if element more flexible and not require preset comparisons to function
+        return {
+          boolean1: false,
+          boolean2: true,
+          boolean3: false,
+          boolean4: true,
+          toggleBoolean,
+        }
+      }
+    </script>
+
+    <p>
+      <button data-boolean-id="1" on:click="{leElseExample.toggleBoolean}">Toggle Boolean 1</button>
+    </p>
+
+    <p>
+      <button data-boolean-id="2" on:click="{leElseExample.toggleBoolean}">Toggle Boolean 2</button>
+    </p>
+
+    <p>
+      <button data-boolean-id="3" on:click="{leElseExample.toggleBoolean}">Toggle Boolean 3</button>
+    </p>
+
+    <p>
+      <button data-boolean-id="4" on:click="{leElseExample.toggleBoolean}">Toggle Boolean 4</button>
+    </p>
+
+    <le-if condition="{leElseExample.boolean1}">
+      <p>Boolean 1 is: <span set:text="{leElseExample.boolean1}"></span></p>
+    </le-if>
+
+    <le-if condition="{leElseExample.boolean2}">
+      <p>Boolean 2 is: <span set:text="{leElseExample.boolean2}"></span></p>
+    </le-if>
+
+    <le-if condition="{leElseExample.boolean3}">
+      <p>Boolean 3 is: <span set:text="{leElseExample.boolean3}"></span></p>
+    </le-if>
+
+    <le-if condition="{leElseExample.boolean4}">
+      <p>Boolean 4 is: <span set:text="{leElseExample.boolean4}"></span></p>
+    </le-if>
+
+    <le-else>
+      <span>All Booleans are false!</span>
+    </le-else>
+  </le-context>
+
+  <h3>Le-Each</h3>
+
+  <p>Allows the user to iterate over an array or an object.</p>
+
+  <le-context name="leEachExample">
+    <script>
+      function leEachExample(state) {
+        const addTask = (event) => {
+          event.preventDefault();
+          const formData = new FormData(event.target);
+
+          state.store.tasks.push(formData.get("new-task"));
+        };
+
+        const deleteTask = (event) => {
+          const taskId = event.target.dataset.taskId;
+
+          state.store.tasks.splice(taskId, 1);
+        }
+
+        // TO-DO: Make the if element more flexible and not require preset comparisons to function
+        return {
+          tasks: [],
+          addTask,
+          deleteTask
+        }
+      }
+    </script>
+
+    <form on:submit="{leEachExample.addTask}">
+      <input name="new-task" placeholder="Feed the cats" required />
+      <button data-tab="1" on:click="{leIfExample.setActiveTab}">
+        Add Task
+      </button>
+    </form>
+
+    <le-each list="{leEachExample.tasks}" as="task">
+      <template>
+        <li>
+          <span set:text={task}></span>
+          <button data-taskId="{task.index}" on:click="{leEachExample.deleteTask}">Delete Task</button>
+        </li>
+      </template>
+
+      <ul data-apply-template></ul>
+    </le-each>
+
+    <le-else>
+      <p>No items in your list!</p>
+    </le-else>
+  </le-context>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

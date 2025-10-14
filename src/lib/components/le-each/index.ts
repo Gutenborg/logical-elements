@@ -14,10 +14,10 @@ class LeEach extends LogicalElement {
 
   get isEmpty() {
     if (this.list.length <= 0) {
-      return false;
+      return true;
     }
 
-    return true;
+    return false;
   }
 
   get list(): IterableList {
@@ -49,7 +49,6 @@ class LeEach extends LogicalElement {
 
     if (
       container === null ||
-      list.length === 0 ||
       !(template instanceof HTMLTemplateElement) ||
       typeof variableName !== "string"
     ) {
@@ -67,9 +66,13 @@ class LeEach extends LogicalElement {
 
       this.eachChild((currentChild) => {
         for(const attribute of currentChild.attributes) {
-          if (attribute.value === `{${variableName}}`) {
+          if(attribute.value === `${variableName}.index`) {
+
+          } else if (attribute.value.startsWith(`{${variableName}`) && attribute.value.endsWith("}")) {
             const listPath = this.getAttribute("list")!.slice(1, -1);
-            attribute.value = `{${listPath}.${key}}`;
+            const newPath = attribute.value.replace(variableName, `${listPath}.${key}`);
+            
+            attribute.value = newPath;
           }
         }
       }, clone);
