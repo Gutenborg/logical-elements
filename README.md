@@ -4,7 +4,7 @@ A set of tools for creating logical HTML.
 
 ## A Logical Approach
 
-Most JavaScript frameworks are trying to solve a problem with HTML which is its lack of logic-based functionality and focus on adding features that lets you merge features of JavaScript with HTML. They typically do this by bringing the HTML into the JavaScript domain and controlling the DOM sometimes through a virtual DOM and sometimes through a compiler that provides a JS-like experience which handles doing the tedious task of connecting JS and HTML. Each of these tools, React, Vue, Svelte, Ember, etc. requires that the code you write be transformed before a browser can read it.
+Most JavaScript frameworks are trying to solve a problem with HTML its lack of logic-based functionality, and focus on adding features that lets you merge features of JavaScript with HTML. They typically do this by bringing the HTML into the JavaScript domain and controlling the DOM sometimes through a virtual DOM and sometimes through a compiler that provides a JS-like experience which handles doing the tedious task of connecting JS and HTML. Each of these tools, React, Vue, Svelte, Ember, etc. requires that the code you write be transformed before a browser can read it.
 
 Logical Elements is an attempt to provide framework-level reactivity and functionality without a build step. It allows you to write HTML that can talk directly to nearby JavaScript, reference deeply nested values, update when values change, and iterate over arrays and objects. In short, it provides elements that have logical functionality.
 
