@@ -166,14 +166,13 @@
           state.store.activeTab = event.target.dataset.tab;
         };
 
-        // TO-DO: Make the if element more flexible and not require preset comparisons to function
+        // TO-DO: Look to see if the event system is a better way to handle element communication with the ReactiveState.derive() method
+        // The `setActiveTab` event handler is able to learn about the event target, could I fire off `le-state-read` events to trigger the derive callback?
+        // If I did that, then I could provide a regular handler and the state could be set in the CustomEvent.details property
         return {
           activeTab: "1",
           setActiveTab,
-          isTab1Active: state.derive((store) => store.activeTab === "1"),
-          isTab2Active: state.derive((store) => store.activeTab === "2"),
-          isTab3Active: state.derive((store) => store.activeTab === "3"),
-          isTab4Active: state.derive((store) => store.activeTab === "4"),
+          isActiveTab: state.derive((store, reader) => store.activeTab === reader?.dataset?.tabId),
         }
       }
     </script>
@@ -194,19 +193,19 @@
       Tab 4
     </button>
 
-    <le-if condition="{leIfExample.isTab1Active}">
+    <le-if condition="{leIfExample.isActiveTab}" data-tab-id="1">
       <p>Tab 1 is Active!</p>
     </le-if>
 
-    <le-if condition="{leIfExample.isTab2Active}">
+    <le-if condition="{leIfExample.isActiveTab}" data-tab-id="2">
       <p>Tab 2 is Active!</p>
     </le-if>
 
-    <le-if condition="{leIfExample.isTab3Active}">
+    <le-if condition="{leIfExample.isActiveTab}" data-tab-id="3">
       <p>Tab 3 is Active!</p>
     </le-if>
 
-    <le-if condition="{leIfExample.isTab4Active}">
+    <le-if condition="{leIfExample.isActiveTab}" data-tab-id="4">
       <p>Tab 4 is Active!</p>
     </le-if>
   </le-context>

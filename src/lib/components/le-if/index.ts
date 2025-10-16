@@ -5,7 +5,7 @@ class LeIf extends LogicalElement {
   static observedAttributes = ["condition"];
 
   get condition() {
-    return this.getAttributeFromState("condition");
+    return this.getStateFromAttribute("condition", this);
   }
 
   onUpdated() {

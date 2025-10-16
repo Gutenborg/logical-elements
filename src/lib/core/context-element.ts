@@ -20,8 +20,12 @@ export interface StateUpdatedEventDetail {
 /** Provides an element that has a state and allows you to place a state-defining script within it */
 class ContextElement extends LogicalElement {
   // MARK: Properties
-  private _state = new ReactiveState();
+  private _state = new ReactiveState(this._stateName);
   private _stateSubscriberId: number | null = null;
+
+  private get _stateName () {
+    return this.getAttribute("name") ?? this.getAttribute("id") ?? window.crypto.randomUUID();
+  }
 
   public get state() {
     return this._state;

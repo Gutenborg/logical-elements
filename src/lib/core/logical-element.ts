@@ -1,7 +1,7 @@
 import UpdateScheduler from "./update-scheduler";
 import type { HTMLAttributeValue } from "./shared-types";
 import ContextElement, { StateUpdatedEventDetail } from "./context-element";
-import { ReactiveState } from "./reactive-state";
+import { DerivedReader, ReactiveState } from "./reactive-state";
 
 interface LogicalElement extends HTMLElement {
   addEventListener<K extends keyof HTMLElementEventMap>(
@@ -471,18 +471,14 @@ class LogicalElement extends HTMLElement {
     }
   }
 
-  getAttributeFromState(attributeName: string) {
+  getStateFromAttribute(attributeName: string, reader: DerivedReader = null) {
     const attributeValue = super.getAttribute(attributeName);
 
     if (!ReactiveState.isStateValue(attributeValue)) {
       return attributeValue;
     }
 
-    // Value needs to be looked up in a state object
-    const { name, path } = ReactiveState.parsePath(attributeValue);
-    const stateValue = this.stateProviders[name]?.lookupValue(path);
-
-    return stateValue;
+    return this.getStateValue(attributeValue, reader);
   }
 
   getStateProvider(fullPath: string | null): ReactiveState | undefined {
@@ -491,10 +487,18 @@ class LogicalElement extends HTMLElement {
     return this.stateProviders[name];
   }
 
-  getStateValue(fullPath: string | null) {
+  getStateValue(fullPath: string | null, reader: DerivedReader = null) {
     const { name, path } = ReactiveState.parsePath(fullPath);
-
-    return this.stateProviders[name]?.lookupValue(path);
+    const stateProvider = this.stateProviders[name];
+    
+    if (!(stateProvider instanceof ReactiveState)) {
+      // There is no value to look up;
+      return;
+    }
+    
+    // Set the reader element
+    stateProvider.reader = reader;
+    return stateProvider.lookupValue(path);
   }
 
   handleReactiveNamespaces() {

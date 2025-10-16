@@ -23,7 +23,7 @@ export function handleAttributes(
 
     if (ReactiveState.isStateValue(match.value)) {
       // Value is a context lookup and we need to fetch it
-      matchValue = instance.getStateValue(match.value);
+      matchValue = instance.getStateValue(match.value, match.element);
     }
 
     const convertedValue = convertToAttribute(matchValue);
@@ -64,7 +64,7 @@ export function handleListeners(
     }
 
     // Compare the match to the list of current handlers to determine if we need to remove any
-    const handler = instance.getStateValue(match.value);
+    const handler = instance.getStateValue(match.value, match.element);
 
     if (typeof handler === "function") {
       // Listener has not been added and needs to be
@@ -84,7 +84,7 @@ export function handleProperties(
 
     if (matchValue?.startsWith("{") && matchValue?.endsWith("}")) {
       // Value is a context lookup and we need to fetch it
-      matchValue = instance.getStateValue(matchValue);
+      matchValue = instance.getStateValue(matchValue, match.element);
     }
 
     switch (match.localName) {

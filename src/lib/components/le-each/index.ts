@@ -22,7 +22,7 @@ class LeEach extends LogicalElement {
 
   get list(): IterableList {
     const attributeValue = this.getAttribute("list");
-    const stateValue = this.getStateValue(attributeValue);
+    const stateValue = this.getStateValue(attributeValue, this);
 
     if (!Array.isArray(stateValue)) {
       return [];

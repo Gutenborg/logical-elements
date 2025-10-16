@@ -1,6 +1,7 @@
 export type StateStore = Record<string, any>;
-
 export type ReactiveCallback = (property: string, newValue: any, previousValue: any) => void;
+export type DerivedCallback = (store: StateStore, element: DerivedReader) => void;
+export type DerivedReader = HTMLElement | null;
 
 export class ReactiveState {
   public static isStateValue (fullPath: string | null) {
@@ -29,6 +30,9 @@ export class ReactiveState {
   private _subscribers: Record<number, ReactiveCallback> = {};
 
   public name: string;
+
+  /** This property allows us to provide the element that is requesting the state value to the derived function. This is helpful because it lets the elements communicate their current DOM state to the derived callback. */
+  public reader: DerivedReader = null;
 
   constructor(name: string) {
     this.name = name;
@@ -63,8 +67,8 @@ export class ReactiveState {
         let value = target[property];
 
         // TO-DO: Figure out a better way to determine when to call derived values
-        if (typeof value === "function" && value.name === "wrappedCallback") {
-          value = value(self._store);
+        if (typeof value === "function" && value.name === "_deriveWrappedCallback") {
+          value = value();
         }
 
         return value;
@@ -112,38 +116,40 @@ export class ReactiveState {
     return new Proxy(shallowClone, this._createProxyHandler());
   }
 
-  public derive(callback: Function) {
+  public derive(callback: DerivedCallback) {
     if (typeof callback !== "function") {
       console.warn("No function to derive from, returning value as provided");
       return callback;
     }
-
-    const wrappedCallback = () => callback.call(this, this._store);
     
-    return wrappedCallback;
+    const _deriveWrappedCallback = () => {
+      console.log(this.name, this._store, this.reader);
+      return callback.call(this, this._store, this.reader);
+    };
+    
+    // Reset the reader
+    this.reader = null;
+    
+    return _deriveWrappedCallback;
   }
 
   public lookupValue(path: string) {
     const propertyMap = path.split(".");
-  
-    // Remove the namespace
-    if (propertyMap[0].startsWith("$")) {
-      propertyMap.splice(0, 1);
-    }
+    let propertyValue: any;
   
     if (propertyMap.length === 1) {
       // We can return the property directly
-      return this._store[propertyMap[0]];
+      propertyValue = this._store[propertyMap[0]];
+    } else {
+      // Navigate the object
+      propertyValue = propertyMap.reduce((previous, current) => {
+        if (previous[current] !== undefined) {
+          return previous[current];
+        }
+    
+        return;
+      }, this._store);
     }
-  
-    // Navigate the object
-    const propertyValue = propertyMap.reduce((previous, current) => {
-      if (previous[current] !== undefined) {
-        return previous[current];
-      }
-  
-      return;
-    }, this._store);
   
     return propertyValue;
   }
