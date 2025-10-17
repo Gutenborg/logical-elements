@@ -123,7 +123,6 @@ export class ReactiveState {
     }
     
     const _deriveWrappedCallback = () => {
-      console.log(this.name, this._store, this.reader);
       return callback.call(this, this._store, this.reader);
     };
     
