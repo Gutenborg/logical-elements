@@ -4,6 +4,14 @@ import ContextElement from "../../core/context-element";
  * script within it. The purpose of this component is to give users the ability to easily add state
  * logic next to locations where it is relevant in the markup. */
 class LeContext extends ContextElement {
+  get name () {
+    return this.getAttribute("name");
+  }
+
+  onConnected() {
+    this.addEventListener("le-state-request", this.handleStateRequest);
+  }
+
   onParsed() {
     // Check for a context script element
     const contextScript = this.querySelector<HTMLScriptElement>("script");
@@ -20,6 +28,23 @@ class LeContext extends ContextElement {
     ) {
       // Need to run the context script and get the value
       this.state.store = window[name as keyof Window].call(this, this.state);
+    }
+  }
+
+  createStateResponseEvent () {
+    const event = new CustomEvent("le-state-response", {
+      bubbles: false,
+      cancelable: false,
+      composed: false,
+      detail: this.state.store,
+    });
+
+    return event;
+  }
+
+  handleStateRequest (event: CustomEvent) {
+    if (event.detail.context === this.name) {
+      event.target?.dispatchEvent(this.createStateResponseEvent());
     }
   }
 }

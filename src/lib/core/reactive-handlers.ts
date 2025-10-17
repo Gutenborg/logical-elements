@@ -14,6 +14,10 @@ export function convertToAttribute(value: any): HTMLAttributeValue {
   return convertedValue;
 }
 
+export function handleEventTest(matches: LogicalElementReactiveMatch[], logicalParent: LogicalElement) {
+
+}
+
 export function handleAttributes(
   matches: LogicalElementReactiveMatch[],
   instance: LogicalElement

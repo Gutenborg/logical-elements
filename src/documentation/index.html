@@ -115,6 +115,35 @@
 
   <p>Allows the user to create a reactive state that can be consumed by its children.</p>
 
+  <le-context name="testContext">
+    <script>
+      function testContext(state) {
+        const testEventHandler = (event) => {
+          console.log(event.target, event.detail);
+        };
+
+        const normalEventHandler = (event) => {
+          console.log(event.target, event.detail);
+        };
+
+        // TO-DO: Look to see if the event system is a better way to handle element communication with the ReactiveState.derive() method
+        // The `setActiveTab` event handler is able to learn about the event target, could I fire off `le-state-read` events to trigger the derive callback?
+        // If I did that, then I could provide a regular handler and the state could be set in the CustomEvent.details property
+        return {
+          testEventHandler,
+          normalEventHandler,
+          testIdea: state.read((event) => { console.log(event) })
+        }
+      }
+    </script>
+
+    <test-component>
+      <button on:click="{testContext.normalEventHandler}" test:event="{testContext.testEvent}">
+        Test Button
+      </button>
+    </test-component>
+  </le-context>
+
   <le-context name="leContextExample">
     <script>
       function leContextExample(state) {
