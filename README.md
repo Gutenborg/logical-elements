@@ -59,7 +59,11 @@ One of the main primary functionalities is the ability to declare attribute name
 </le-context>
 ```
 
-The `attr` namespace gets broken down in this way: 'attr:ATTRIBUTE_NAME="{PROVIDER_NAME.PROPERTY_NAME}"'. It will look up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.
+The namespace gets broken down in this way:
+
+NAMESPACE:COMMAND="{PROVIDER_NAME.PROPERTY_NAME}"
+
+So, using that information `attr` namespace will look up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.
 
 There are three provided reactive namespaces that are assigned by default to the ContextElement class:
 
