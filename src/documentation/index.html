@@ -7,6 +7,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vite + TS</title>
 
+  <link href="./public/bulma.min.css" rel="stylesheet" />
+
   <style>
     :not(:defined) {
       display: none;
@@ -14,30 +16,34 @@
   </style>
 </head>
 
-<body>
-  <h1>Logical Elements</h1>
+<body class="container p-4">
+  <header class="block">
+    <h1 class="title is-1 has-text-centered pb-4">Logical Elements</h1>
 
-  <p>A set of tools for creating logical HTML.</p>
+    <p class="subtitle is-4 has-text-centered">A set of tools for creating logical HTML.</p>
+  </header>
 
-  <h2>A Logical Approach</h2>
+  <h2 class="title is-2">A Logical Approach</h2>
 
-  <p>Most JavaScript frameworks are trying to solve a problem with HTML which is its lack of logic-based functionality
+  <p class="block">Most JavaScript frameworks are trying to solve a problem with HTML which is its lack of logic-based
+    functionality
     and focus on adding features that lets you merge features of JavaScript with HTML. They typically do this by
     bringing the HTML into the JavaScript domain and controlling the DOM sometimes through a virtual DOM and sometimes
     through a compiler that provides a JS-like experience which handles doing the tedious task of connecting JS and
     HTML. Each of these tools, React, Vue, Svelte, Ember, etc. requires that the code you write be transformed before a
     browser can read it.</p>
 
-  <p>Logical Elements is an attempt to provide framework-level reactivity and functionality without a build step. It
+  <p class="block">Logical Elements is an attempt to provide framework-level reactivity and functionality without a
+    build step. It
     allows you to write HTML that can talk directly to nearby JavaScript, reference deeply nested values, update when
     values change, and iterate over arrays and objects. In short, it provides elements that have logical functionality.
   </p>
 
-  <h2>Core Approach</h2>
+  <h2 class="title is-2">Core Methods</h2>
 
-  <p>The main way that this is achieved is through the use of a few combined browser tools such as:</p>
+  <p class="block">The main way that this is achieved is through the use of a few combined browser tools such as:</p>
 
-  <ul>
+  <ul class="block">
     <li>Custom Elements</li>
     <li>Mutation Observers</li>
     <li>Object Proxies</li>
@@ -46,17 +52,18 @@
     <li>And more!</li>
   </ul>
 
-  <p>The elements provided serve as both an authoring tool and as useful ways of providing basic logic in your HtML such
+  <p class="block">The elements provided serve as both an authoring tool and as useful ways of providing basic logic in
+    your HtML such
     as
     if and else statements and each loops.</p>
 
-  <h3>The LogicalElement Class</h3>
+  <h3 class="title is-3">The LogicalElement Class</h3>
 
-  <p>The first tool is an enhanced HTMLElement class to use when authoring your own custom elements. It features the
+  <p class="block">The first tool is an enhanced HTMLElement class to use when authoring your own custom elements. It
+    features the
     following enhancements:</p>
 
-  <ul>
-
+  <ul class="block">
     <li>Parsed Callback - Fires when the element has been fully parsed with all of its children. This solves an issue
       with the Custom Element `connectedCallback` which triggers on the opening tag of an element and doesn't know
       anything
@@ -76,44 +83,49 @@
     <li>Lookup State Values - Lookup values from a parent state provider.</li>
   </ul>
 
-  <h3>The ContextElement Class</h3>
+  <h3 class="title is-3">The ContextElement Class</h3>
 
-  <p>It extends the LogicalElement class and adds a reactive state to it to become a state provider.</p>
+  <p class="block">It extends the LogicalElement class and adds a reactive state to it to become a state provider.</p>
 
-  <ul>
+  <ul class="block">
     <li>Reactive State - Uses JavaScript object proxies to capture update events and notify subscribers. Will trigger
       the
       `stateUpdated`, `providerUpdated`, and `updated` callbacks.</li>
     <li>State Updated Callback - Fires when the state of this ContextElement instance updates.</li>
   </ul>
 
-  <h3>Reactive Attribute Namespaces</h3>
-  <p>One of the main primary functionalities is the ability to declare attribute namespaces that will be evaluated if
+  <h3 class="title is-3">Reactive Attribute Namespaces</h3>
+
+  <p class="block">One of the main primary functionalities is the ability to declare attribute namespaces that will be
+    evaluated if
     there
     is a provider update anywhere above them. Take for example the `attr` namespace. You can use this to assign any
     value
     to another attribute on the same element.</p>
 
-  <p>The `attr` namespace gets broken down in this way: 'attr:ATTRIBUTE_NAME="{PROVIDER_NAME.PROPERTY_NAME}"'. It will
+  <p class="block">The `attr` namespace gets broken down in this way:
+    'attr:ATTRIBUTE_NAME="{PROVIDER_NAME.PROPERTY_NAME}"'. It will
     look
     up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.</p>
 
-  <p>There are three provided reactive namespaces that are assigned by default to the ContextElement class:</p>
+  <p class="block">There are three provided reactive namespaces that are assigned by default to the ContextElement
+    class:</p>
 
-  <ul>
+  <ul class="block">
     <li>`attr` - Assign values to attributes on the same element</li>
     <li>`on` - Add event listeners to the element for the specified event</li>
     <li>`set` - Assign values to specific properties such as `textContent`</li>
   </ul>
 
-  <p>Any author of a LogicalElement can add their own reactive namespaces to be processed during the `updatedCallback`
+  <p class="block">Any author of a LogicalElement can add their own reactive namespaces to be processed during the
+    `updatedCallback`
     lifecycle.</p>
 
-  <h2>Base Components</h2>
+  <h2 class="title is-2">Base Components</h2>
 
-  <h3>Le-Context</h3>
+  <h3 class="title is-3">Le-Context</h3>
 
-  <p>Allows the user to create a reactive state that can be consumed by its children.</p>
+  <p class="block">Allows the user to create a reactive state that can be consumed by its children.</p>
 
   <le-context name="leContextExample">
     <script>
@@ -147,17 +159,29 @@
       }
     </script>
 
-    <p>
-      <button on:click="{leContextExample.decrementCount}" title="Decrease Count">-</button>
-      <span>Count is: <span set:text="{leContextExample.count}"></span> Which is <span
-          set:text="{leContextExample.countAlert}"></span></span>
-      <button on:click="{leContextExample.incrementCount}" title="Increase Count">+</button>
-    </p>
+    <div class="columns is-centered is-align-items-center">
+      <div class="column is-narrow">
+        <button class="button" on:click="{leContextExample.decrementCount}" title="Decrease Count">
+          <span class="icon">-</span>
+        </button>
+      </div>
+
+      <div class="column is-narrow is-size-4">
+        Count is: <span set:text="{leContextExample.count}"></span> Which is <span class="has-text-weight-bold"
+          set:text="{leContextExample.countAlert}"></span>
+      </div>
+
+      <div class="column is-narrow">
+        <button class="button" on:click="{leContextExample.incrementCount}" title="Increase Count">
+          <span class="icon">+</span>
+        </button>
+      </div>
+    </div>
   </le-context>
 
-  <h3>Le-If</h3>
+  <h3 class="title is-3">Le-If</h3>
 
-  <p>Allows the user to conditionally render children.</p>
+  <p class="block">Allows the user to conditionally render children.</p>
 
   <le-context name="leIfExample">
     <script>
@@ -177,42 +201,55 @@
       }
     </script>
 
-    <button data-tab="1" on:click="{leIfExample.setActiveTab}">
-      Tab 1
-    </button>
+    <div class="tabs is-centered">
+      <ul>
+        <li>
+          <a data-tab="1" on:click="{leIfExample.setActiveTab}">
+            Tab 1
+          </a>
+        </li>
 
-    <button data-tab="2" on:click="{leIfExample.setActiveTab}">
-      Tab 2
-    </button>
+        <li>
+          <a data-tab="2" on:click="{leIfExample.setActiveTab}">
+            Tab 2
+          </a>
+        </li>
 
-    <button data-tab="3" on:click="{leIfExample.setActiveTab}">
-      Tab 3
-    </button>
+        <li>
+          <a data-tab="3" on:click="{leIfExample.setActiveTab}">
+            Tab 3
+          </a>
+        </li>
 
-    <button data-tab="4" on:click="{leIfExample.setActiveTab}">
-      Tab 4
-    </button>
+        <li>
+          <a data-tab="4" on:click="{leIfExample.setActiveTab}">
+            Tab 4
+          </a>
+        </li>
+      </ul>
+    </div>
 
     <le-if condition="{leIfExample.isActiveTab}" data-tab-id="1">
-      <p>Tab 1 is Active!</p>
+      <p class="block is-size-4">Tab 1 is Active!</p>
     </le-if>
 
     <le-if condition="{leIfExample.isActiveTab}" data-tab-id="2">
-      <p>Tab 2 is Active!</p>
+      <p class="block is-size-4">Tab 2 is Active!</p>
     </le-if>
 
     <le-if condition="{leIfExample.isActiveTab}" data-tab-id="3">
-      <p>Tab 3 is Active!</p>
+      <p class="block is-size-4">Tab 3 is Active!</p>
     </le-if>
 
     <le-if condition="{leIfExample.isActiveTab}" data-tab-id="4">
-      <p>Tab 4 is Active!</p>
+      <p class="block is-size-4">Tab 4 is Active!</p>
     </le-if>
   </le-context>
 
-  <h3>Le-Else</h3>
+  <h3 class="title is-3">Le-Else</h3>
 
-  <p>Looks at sibling elements using validator functions to check if it needs to be shown. If any sibling validator
+  <p class="block">Looks at sibling elements using validator functions to check if it needs to be shown. If any sibling
+    validator
     returns true, it is hidden. Authors can define their own validator functions.</p>
 
   <le-context name="leElseExample">
