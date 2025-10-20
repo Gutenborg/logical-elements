@@ -65,9 +65,10 @@ NAMESPACE:COMMAND="{PROVIDER_NAME.PROPERTY_NAME}"
 
 So, using that information `attr` namespace will look up the value on the context and assign it to the indicated attribute, in this case the `disabled` attribute.
 
-There are three provided reactive namespaces that are assigned by default to the ContextElement class:
+There are four provided reactive namespaces that are assigned by default to the ContextElement class:
 
-- `attr` - Assign values to attributes on the same element
+- `attr` - Assign values to attributes on the same element, will overwrite any current attribute values
+- `cls` - Assign class names conditionally
 - `on` - Add event listeners to the element for the specified event
 - `set` - Assign values to specific properties such as `textContent`
 
