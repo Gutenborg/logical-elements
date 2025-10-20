@@ -154,50 +154,43 @@
 
   <le-context name="leContextExample">
     <script>
+      // Function that matches the name of the context and will be used to create the default state
       function leContextExample(state) {
+        // Click event handlers
         const incrementCount = (event) => {
           state.store.count++;
         };
 
-        const decrementCount = (store) => {
+        const decrementCount = (event) => {
           state.store.count--;
         };
 
+        // Whatever is returned is the default value of the state
         return {
           count: 0,
           decrementCount,
           incrementCount,
-          countAlert: state.derive((store) => {
-            if (store.count < -5) {
-              return "Really Low"
-            } else if (store.count < 0) {
-              return "Low"
-            } else if (store.count === 0) {
-              return "Neutral"
-            } else if (store.count > 0 && store.count < 5) {
-              return "High"
-            } else if (store.count >= 5) {
-              return "Really High"
-            }
-          })
+          tooHigh: state.derive((store) => store.count > 10),
+          tooLow: state.derive((store) => store.count < 10)
         }
       }
     </script>
 
     <div class="columns is-centered is-align-items-center">
       <div class="column is-narrow">
-        <button class="button" on:click="{leContextExample.decrementCount}" title="Decrease Count">
+        <button attr:disabled="{leContextExample.tooLow}" class="button" on:click="{leContextExample.decrementCount}"
+          title="Decrease Count">
           <span class="icon">-</span>
         </button>
       </div>
 
       <div class="column is-narrow is-size-4">
-        Count is: <span set:text="{leContextExample.count}"></span> Which is <span class="has-text-weight-bold"
-          set:text="{leContextExample.countAlert}"></span>
+        Count is: <span set:text="{leContextExample.count}"></span>
       </div>
 
       <div class="column is-narrow">
-        <button class="button" on:click="{leContextExample.incrementCount}" title="Increase Count">
+        <button attr:disabled="{leContextExample.toHigh}" class="button" on:click="{leContextExample.incrementCount}"
+          title="Increase Count">
           <span class="icon">+</span>
         </button>
       </div>

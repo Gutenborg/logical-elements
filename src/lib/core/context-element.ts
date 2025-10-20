@@ -2,9 +2,9 @@ import LogicalElement from "./logical-element";
 import { ReactiveState } from "./reactive-state";
 import { HTMLAttributeValue } from "./shared-types";
 import {
-  handleAttributes,
-  handleListeners,
-  handleProperties,
+  reactiveAttr,
+  reactiveOn,
+  reactiveSet,
 } from "./reactive-handlers";
 
 interface ContextElement {
@@ -39,9 +39,9 @@ class ContextElement extends LogicalElement {
     );
 
     // Add reactive namespaces that interact with state
-    this.reactiveNamespaces.set("attr", handleAttributes);
-    this.reactiveNamespaces.set("on", handleListeners);
-    this.reactiveNamespaces.set("set", handleProperties);
+    this.reactiveNamespaces.set("attr", reactiveAttr);
+    this.reactiveNamespaces.set("on", reactiveOn);
+    this.reactiveNamespaces.set("set", reactiveSet);
 
     super.connectedCallback();
   }
