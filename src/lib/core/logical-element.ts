@@ -1,7 +1,7 @@
 import UpdateScheduler from "./update-scheduler";
 import type { HTMLAttributeValue } from "./shared-types";
 import ContextElement, { StateUpdatedEventDetail } from "./context-element";
-import { DerivedReader, ReactiveState } from "./reactive-state";
+import ReactiveState, { DerivedReader } from "./reactive-state";
 
 interface LogicalElement extends HTMLElement {
   addEventListener<K extends keyof HTMLElementEventMap>(

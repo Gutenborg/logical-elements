@@ -9,8 +9,10 @@
   },
   "scripts": {
     "dev": "vite ./src/documentation",
-    "build": "tsc ./src/documentation && vite build ./src/documentation",
-    "preview": "vite preview ./src/documentation"
+    "build": "npm run build:le && npm run build:documentation",
+    "build:le": "tsc --project tsconfig.json",
+    "build:documentation": "vite build ./src/documentation --config vite.config.js",
+    "preview": "vite preview ./src/documentation --config vite.config.js"
   },
   "workspaces": [
     "packages/components",

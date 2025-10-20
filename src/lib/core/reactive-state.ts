@@ -3,7 +3,7 @@ export type ReactiveCallback = (property: string, newValue: any, previousValue: 
 export type DerivedCallback = (store: StateStore, element: DerivedReader) => void;
 export type DerivedReader = HTMLElement | null;
 
-export class ReactiveState {
+class ReactiveState {
   public static isStateValue (fullPath: string | null) {
     if (fullPath?.startsWith("{") && fullPath?.endsWith("}")) {
       // Path is a state value lookup
@@ -182,3 +182,5 @@ export class ReactiveState {
     return true;
   }
 }
+
+export default ReactiveState;

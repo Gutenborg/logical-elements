@@ -1,5 +1,5 @@
 import LogicalElement, { LogicalElementReactiveMatch } from "../logical-element";
-import { ReactiveState } from "../reactive-state";
+import ReactiveState from "../reactive-state";
 import { HTMLAttributeValue } from "../shared-types";
 
 export function convertToAttribute(value: any): HTMLAttributeValue {
