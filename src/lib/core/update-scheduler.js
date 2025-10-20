@@ -1,7 +1,13 @@
 class UpdateScheduler {
-  timeoutId: number | null = null;
+  /** The id returned for the timeout, used to cancel the timeout as needed
+   * @type {?number}
+   */
+  timeoutId = null;
 
-  scheduleUpdate(callback: Function) {
+  /** Creates a pending update that is cancelled if called again before the update resolves
+   * @param {Function} callback
+   */
+  scheduleUpdate(callback) {
     if (this.timeoutId !== null) {
       cancelAnimationFrame(this.timeoutId);
     }
