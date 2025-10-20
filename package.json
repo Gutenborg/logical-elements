@@ -1,12 +1,17 @@
 {
   "name": "logical-elements",
-  "private": true,
-  "version": "0.0.0",
+  "author": {
+    "email": "Aaron.Williams@Polymathic.Company",
+    "name": "Aaron Williams",
+    "url": "https://github.com/Gutenborg/Aaron-Williams"
+  },
+  "version": "0.1.0",
   "type": "module",
   "devDependencies": {
     "typescript": "^5.5.3",
     "vite": "^5.4.1"
   },
+  "files": ["./dist"],
   "scripts": {
     "dev": "vite ./src/documentation",
     "build": "npm run build:le && npm run build:documentation",
