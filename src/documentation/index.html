@@ -175,7 +175,7 @@
           decrementCount,
           incrementCount,
           tooHigh: state.derive((store) => store.count > 10),
-          tooLow: state.derive((store) => store.count < 10),
+          tooLow: state.derive((store) => store.count < -10),
         }
       }
     </script>
@@ -193,7 +193,7 @@
       </div>
 
       <div class="column is-narrow">
-        <button attr:disabled="{leContextExample.toHigh}" class="button" on:click="{leContextExample.incrementCount}"
+        <button attr:disabled="{leContextExample.tooHigh}" class="button" on:click="{leContextExample.incrementCount}"
           title="Increase Count">
           <span class="icon">+</span>
         </button>
