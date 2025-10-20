@@ -171,7 +171,7 @@
           decrementCount,
           incrementCount,
           tooHigh: state.derive((store) => store.count > 10),
-          tooLow: state.derive((store) => store.count < 10)
+          tooLow: state.derive((store) => store.count < 10),
         }
       }
     </script>
@@ -221,25 +221,25 @@
 
     <div class="tabs">
       <ul>
-        <li>
+        <li cls:is-active="{leIfExample.isActiveTab}" data-tab-id="1">
           <a data-tab="1" on:click="{leIfExample.setActiveTab}">
             Tab 1
           </a>
         </li>
 
-        <li>
+        <li cls:is-active="{leIfExample.isActiveTab}" data-tab-id="2">
           <a data-tab="2" on:click="{leIfExample.setActiveTab}">
             Tab 2
           </a>
         </li>
 
-        <li>
+        <li cls:is-active="{leIfExample.isActiveTab}" data-tab-id="3">
           <a data-tab="3" on:click="{leIfExample.setActiveTab}">
             Tab 3
           </a>
         </li>
 
-        <li>
+        <li cls:is-active="{leIfExample.isActiveTab}" data-tab-id="4">
           <a data-tab="4" on:click="{leIfExample.setActiveTab}">
             Tab 4
           </a>

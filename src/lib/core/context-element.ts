@@ -6,6 +6,7 @@ import {
   reactiveOn,
   reactiveSet,
 } from "./reactive-handlers";
+import { reactiveCls } from "./reactive-handlers/cls";
 
 interface ContextElement {
   onStateUpdated?(property: string, previousValue: any, newValue: any): void;
@@ -40,6 +41,7 @@ class ContextElement extends LogicalElement {
 
     // Add reactive namespaces that interact with state
     this.reactiveNamespaces.set("attr", reactiveAttr);
+    this.reactiveNamespaces.set("cls", reactiveCls);
     this.reactiveNamespaces.set("on", reactiveOn);
     this.reactiveNamespaces.set("set", reactiveSet);
 
