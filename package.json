@@ -1,27 +1,29 @@
 {
-  "name": "logical-elements",
   "author": {
     "email": "Aaron.Williams@Polymathic.Company",
     "name": "Aaron Williams",
     "url": "https://github.com/Gutenborg/Aaron-Williams"
   },
-  "version": "0.1.0",
-  "type": "module",
   "devDependencies": {
     "typescript": "^5.5.3",
     "vite": "^5.4.1"
   },
   "files": ["./dist"],
+  "homepage": "https://github.com/Gutenborg/logical-elements",
+  "keywords": ["logical", "elements", "custom elements"],
+  "main": "./dist/index.js",
+  "name": "logical-elements",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gutenborg/logical-elements"
+  },
   "scripts": {
     "dev": "vite ./src/documentation",
     "build": "npm run build:le && npm run build:documentation",
     "build:le": "tsc --project tsconfig.json",
-    "build:documentation": "vite build ./src/documentation --config vite.config.js",
-    "preview": "vite preview ./src/documentation --config vite.config.js"
+    "build:documentation": "vite build ./src-documentation --config vite.config.js",
+    "preview": "vite preview ./src-documentation --config vite.config.js"
   },
-  "workspaces": [
-    "packages/components",
-    "packages/core",
-    "packages/documentation"
-  ]
+  "type": "module",
+  "version": "0.2.1"
 }
