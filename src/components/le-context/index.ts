@@ -1,13 +1,12 @@
-import ContextElement from "../../core/context-element";
+import LogicalElement from "../../core/logical-element";
 
 /** Provides an element that has a state and reactivity and allows you to place a state-defining
  * script within it. The purpose of this component is to give users the ability to easily add state
  * logic next to locations where it is relevant in the markup. */
-class LeContext extends ContextElement {
+class LeContext extends LogicalElement {
   onParsed() {
     // Check for a context script element
     const contextScript = this.querySelector<HTMLScriptElement>("script");
-
     const name = this.getAttribute("name");
 
     if (contextScript !== null && name === null) {

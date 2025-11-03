@@ -1,7 +1,7 @@
-import LogicalElement from "../../core/logical-element";
+import { HTMLParsedElement } from "../../core/";
 
 /** Has a condition attribute that can be true or false. If true, the element is shown, otherwise it is hidden. */
-class LeIf extends LogicalElement {
+class LeIf extends HTMLParsedElement {
   static observedAttributes = ["condition"];
 
   get condition() {

@@ -1,9 +1,9 @@
-import LogicalElement from "../../core/logical-element";
+import { HTMLParsedElement } from "../../core";
 
 type IterableList = Array<any>;
 
 /** Can be provided a list and for each item in the list will iterate over a template. */
-class LeEach extends LogicalElement {
+class LeEach extends HTMLParsedElement {
   static observedAttributes = ["as", "list"];
 
   renderedItemCount = 0;
@@ -58,6 +58,7 @@ class LeEach extends LogicalElement {
 
     const fragment = document.createDocumentFragment();
 
+    // Remove all previous nodes
     Array.from(container.childNodes).forEach((childNode) => childNode.remove());
 
     // Render the template

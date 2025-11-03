@@ -1,4 +1,4 @@
-import LogicalElement from "../../core/logical-element";
+import { HTMLParsedElement } from "../../core";
 import LeEach from "../le-each";
 import LeIf from "../le-if";
 
@@ -14,7 +14,7 @@ type RelevantSiblingHandlers = Map<
  * their condition as false, this element is shown. Otherwise it is hidden.
  *
  * TO-DO: Make sure the element is watching the siblings directly instead of relying on an updated event from the parent*/
-class LeElse extends LogicalElement {
+class LeElse extends HTMLParsedElement {
   public relevantSiblingHandlers: RelevantSiblingHandlers = new Map([
     ["le-each", this.checkLeEach],
     ["le-if", this.checkLeIf]

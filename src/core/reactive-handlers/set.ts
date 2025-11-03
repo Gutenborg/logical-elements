@@ -1,4 +1,4 @@
-import LogicalElement, { LogicalElementReactiveMatch } from "../logical-element";
+import { LogicalElement, LogicalElementReactiveMatch } from "../";
 
 export function reactiveSet(
     matches: LogicalElementReactiveMatch[],

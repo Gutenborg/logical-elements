@@ -18,7 +18,7 @@
     "url": "https://github.com/Gutenborg/logical-elements"
   },
   "scripts": {
-    "dev": "vite ./src/documentation",
+    "dev": "vite ./src-documentation",
     "build": "npm run build:le && npm run build:documentation",
     "build:le": "tsc --project tsconfig.json",
     "build:documentation": "vite build ./src-documentation --config vite.config.js",

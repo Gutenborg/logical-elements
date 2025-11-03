@@ -1,4 +1,4 @@
-import LogicalElement, { LogicalElementReactiveMatch } from "../logical-element";
+import { LogicalElement, LogicalElementReactiveMatch } from "../";
 import ReactiveState from "../reactive-state";
 import { HTMLAttributeValue } from "../shared-types";
 
