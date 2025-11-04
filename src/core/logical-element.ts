@@ -1,5 +1,5 @@
 import HTMLParsedElement from "./html-parsed-element";
-import ReactiveState, { DerivedReader } from "./reactive-state";
+import ReactiveState from "./reactive-state";
 import { HTMLAttributeValue } from "./shared-types";
 import {
   reactiveAttr,

@@ -67,8 +67,9 @@ class LeEach extends HTMLParsedElement {
 
       this.eachChild((currentChild) => {
         for(const attribute of currentChild.attributes) {
-          if(attribute.value === `${variableName}.index`) {
-
+          if(attribute.value === `{${variableName}.index}`) {
+            // Assign the index to the variable directly
+            attribute.value = String(key);
           } else if (attribute.value.startsWith(`{${variableName}`) && attribute.value.endsWith("}")) {
             const listPath = this.getAttribute("list")!.slice(1, -1);
             const newPath = attribute.value.replace(variableName, `${listPath}.${key}`);
