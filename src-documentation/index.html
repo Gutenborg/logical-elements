@@ -209,6 +209,7 @@
     <script>
       function leIfExample(state) {
         const setActiveTab = (event) => {
+          console.log(event);
           state.store.activeTab = event.target.dataset.tab;
         };
 
