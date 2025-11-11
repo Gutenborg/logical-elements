@@ -173,10 +173,7 @@
           count: 0,
           decrementCount,
           incrementCount,
-          tooHigh: state.derive((store) => {
-            console.log(store);
-            return store.count > 10;
-          }),
+          tooHigh: state.derive((store) => store.count > 10),
           tooLow: state.derive((store) => store.count < -10),
         }
       }
@@ -211,7 +208,6 @@
     <script>
       function leIfExample(state) {
         const setActiveTab = (event) => {
-          console.log(event);
           state.store.activeTab = event.target.dataset.tab;
         };
 

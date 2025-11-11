@@ -26,6 +26,7 @@ class ReactiveState {
     return { name, path };
   }
 
+  private _derivedCallbacks = new Set<Function>();
   private _store: StateStore = this._createProxy({});
   private _subscribers: Record<number, ReactiveCallback> = {};
 
@@ -67,7 +68,7 @@ class ReactiveState {
         let value = target[property];
 
         // TO-DO: Figure out a better way to determine when to call derived values
-        if (typeof value === "function" && value.name === "_deriveWrappedCallback") {
+        if (self._derivedCallbacks.has(value)) {
           value = value();
         }
 
@@ -82,8 +83,6 @@ class ReactiveState {
         }
 
         if (self._canProxy(newValue)) {
-          console.log("Need to create a new proxy");
-          
           // Value needs to be a proxy
           target[property] = self._createProxy(newValue);
         } else {
@@ -126,9 +125,10 @@ class ReactiveState {
     const _deriveWrappedCallback = () => {
       return callback.call(this, this._store, this.reader);
     };
-
-    console.log("Deriving!", callback, this, _deriveWrappedCallback.name, this.reader);
     
+    // Store the wrapped callback
+    this._derivedCallbacks.add(_deriveWrappedCallback);
+
     // Reset the reader
     this.reader = null;
     
