@@ -127,7 +127,7 @@ class ReactiveState {
       return callback.call(this, this._store, this.reader);
     };
 
-    console.log("Deriving!", callback, this, _deriveWrappedCallback, this.reader);
+    console.log("Deriving!", callback, this, _deriveWrappedCallback.name, this.reader);
     
     // Reset the reader
     this.reader = null;
