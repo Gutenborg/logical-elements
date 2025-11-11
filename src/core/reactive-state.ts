@@ -122,9 +122,12 @@ class ReactiveState {
       return callback;
     }
     
+    
     const _deriveWrappedCallback = () => {
       return callback.call(this, this._store, this.reader);
     };
+
+    console.log("Deriving!", callback, this, _deriveWrappedCallback, this.reader);
     
     // Reset the reader
     this.reader = null;
